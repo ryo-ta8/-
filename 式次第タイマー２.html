@@ -2,180 +2,519 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>式次第タイマー</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>番号磁石 進捗ボード</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <style>
+    :root {
+      --board-bg: #f5f7fb;
+      --card-border: #d9e2ef;
+      --magnet-blue: #2f80ed;
+      --magnet-orange: #f2994a;
+      --magnet-green: #27ae60;
+      --magnet-shadow: rgba(31, 41, 55, 0.18);
+    }
+
     body {
-      background-color: #f8f9fa;
+      background: var(--board-bg);
+      color: #1f2937;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Segoe UI", sans-serif;
     }
-    .container {
-      margin-top: 30px;
+
+    .app-shell {
+      max-width: 1180px;
+      margin: 24px auto 40px;
+      padding: 0 16px;
     }
-    .status {
+
+    .hero {
+      background: linear-gradient(135deg, #2563eb, #38bdf8);
+      border-radius: 22px;
+      color: #fff;
+      padding: 28px;
+      box-shadow: 0 18px 38px rgba(37, 99, 235, 0.18);
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .hero p {
+      font-size: 1.08rem;
+      margin-bottom: 0;
+      opacity: 0.95;
+    }
+
+    .settings-card,
+    .summary-card,
+    .stage-column {
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    .settings-card .card-header,
+    .summary-card .card-header {
+      background: #fff;
+      border-bottom: 1px solid var(--card-border);
+      border-radius: 18px 18px 0 0;
+      font-weight: 700;
+    }
+
+    .mode-toggle .btn {
+      border-radius: 999px !important;
+      font-weight: 700;
+    }
+
+    .stage-name-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .stage-column {
+      background: #fff;
+      min-height: 260px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .stage-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--card-border);
+      background: #f8fafc;
+    }
+
+    .stage-title {
       font-size: 1.2rem;
-      font-weight: bold;
-      margin-top: 15px;
+      font-weight: 800;
+      margin: 0;
     }
-    .action-buttons {
-      margin-top: 15px;
+
+    .stage-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.4rem;
+      height: 2.4rem;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-weight: 800;
+      font-size: 1.15rem;
+    }
+
+    .magnet-zone {
+      flex: 1;
+      padding: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 12px;
+      background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+
+    .magnet-button {
+      width: 64px;
+      height: 64px;
+      border: 0;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 1.55rem;
+      font-weight: 900;
+      line-height: 1;
+      box-shadow: 0 7px 0 rgba(0, 0, 0, 0.16), 0 10px 18px var(--magnet-shadow);
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+      touch-action: manipulation;
+    }
+
+    .magnet-button:hover,
+    .magnet-button:focus {
+      transform: translateY(-2px);
+      box-shadow: 0 9px 0 rgba(0, 0, 0, 0.16), 0 14px 22px var(--magnet-shadow);
+    }
+
+    .magnet-button:active {
+      transform: translateY(4px);
+      box-shadow: 0 3px 0 rgba(0, 0, 0, 0.18), 0 6px 10px var(--magnet-shadow);
+    }
+
+    .magnet-button.stage-0 { background: var(--magnet-blue); }
+    .magnet-button.stage-1 { background: var(--magnet-orange); }
+    .magnet-button.stage-2 { background: #9b51e0; }
+    .magnet-button.stage-3 { background: #eb5757; }
+    .magnet-button.stage-4 { background: #00a6a6; }
+    .magnet-button.done { background: var(--magnet-green); }
+
+    .empty-message {
+      width: 100%;
+      color: #64748b;
+      font-weight: 700;
+      text-align: center;
+      margin: auto;
+      padding: 26px 8px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.74);
+    }
+
+    .history-list {
+      max-height: 170px;
+      overflow: auto;
+      padding-left: 1.2rem;
+      margin-bottom: 0;
+    }
+
+    .history-list li {
+      margin-bottom: 4px;
+    }
+
+    .large-action {
+      min-height: 48px;
+      border-radius: 14px;
+      font-weight: 800;
+    }
+
+    @media (max-width: 575.98px) {
+      .hero,
+      .settings-card .card-body,
+      .summary-card .card-body {
+        padding: 18px;
+      }
+
+      .magnet-button {
+        width: 58px;
+        height: 58px;
+        font-size: 1.35rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1 class="text-center mb-4">式次第タイマー</h1>
+  <main class="app-shell">
+    <section class="hero mb-4">
+      <h1>番号磁石 進捗ボード</h1>
+      <p>小学校の活動状況を、黒板の番号磁石のような丸ボタンで「見える化」します。</p>
+    </section>
 
-    <!-- 設定パネル -->
-    <div class="card mb-4">
-      <div class="card-header">式次番号設定</div>
+    <section class="card settings-card mb-4">
+      <div class="card-header">ボード設定</div>
       <div class="card-body">
-        <div class="form-row align-items-end">
-          <div class="form-group col-md-3">
+        <div class="form-row">
+          <div class="form-group col-sm-6 col-lg-3">
             <label for="startNumber">開始番号</label>
-            <input type="number" class="form-control" id="startNumber" placeholder="例：1" min="1" step="1">
+            <input type="number" class="form-control form-control-lg" id="startNumber" value="1" min="1" step="1">
           </div>
-          <div class="form-group col-md-3">
+          <div class="form-group col-sm-6 col-lg-3">
             <label for="endNumber">終了番号</label>
-            <input type="number" class="form-control" id="endNumber" placeholder="例：10" min="1" step="1">
+            <input type="number" class="form-control form-control-lg" id="endNumber" value="30" min="1" step="1">
           </div>
-          <div class="form-group col-md-3">
-            <button id="createTableBtn" class="btn btn-primary btn-block">テーブル作成</button>
+          <div class="form-group col-lg-6">
+            <label>使い方</label>
+            <div class="btn-group btn-group-toggle mode-toggle d-flex" data-toggle="buttons" role="group" aria-label="表示モード">
+              <label class="btn btn-outline-primary active flex-fill" id="simpleModeLabel">
+                <input type="radio" name="mode" id="simpleMode" value="simple" checked> シンプル版
+              </label>
+              <label class="btn btn-outline-primary flex-fill" id="stepsModeLabel">
+                <input type="radio" name="mode" id="stepsMode" value="steps"> 段取り版
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div id="stepsSettings" class="border rounded p-3 mb-3" style="display: none;">
+          <div class="form-row align-items-end">
+            <div class="form-group col-sm-6 col-lg-3 mb-sm-0">
+              <label for="stageCount">段取りの数</label>
+              <input type="number" class="form-control" id="stageCount" value="4" min="2" max="8" step="1">
+            </div>
+            <div class="form-group col-sm-6 col-lg-3 mb-sm-0">
+              <button id="updateStageNamesBtn" class="btn btn-outline-secondary btn-block large-action" type="button">名前欄を更新</button>
+            </div>
+            <div class="col-lg-6 text-muted small mt-2 mt-lg-0">
+              例：未着手 → 読む → 書く → 提出 のように、活動に合わせて名前を変えられます。
+            </div>
+          </div>
+          <div id="stageNameInputs" class="stage-name-list mt-3"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="col-md-4 mb-2 mb-md-0">
+            <button id="createBoardBtn" class="btn btn-primary btn-block large-action" type="button">ボードを作成</button>
+          </div>
+          <div class="col-md-4 mb-2 mb-md-0">
+            <button id="undoBtn" class="btn btn-warning btn-block large-action" type="button" disabled>ひとつ戻す</button>
+          </div>
+          <div class="col-md-4">
+            <button id="resetBtn" class="btn btn-outline-danger btn-block large-action" type="button">全員を最初に戻す</button>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- 状態表示エリア -->
-    <div id="globalStatus" class="status text-center text-info">計測待機中</div>
+    <section class="card summary-card mb-4">
+      <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+        <span>現在の状況</span>
+        <span id="statusText" class="text-primary mt-2 mt-md-0">番号と使い方を設定して「ボードを作成」を押してください。</span>
+      </div>
+      <div class="card-body">
+        <div id="summaryText" class="lead mb-3">未作成</div>
+        <ol id="historyList" class="history-list text-muted"></ol>
+      </div>
+    </section>
 
-    <!-- 記録テーブル表示エリア -->
-    <div id="tableArea"></div>
-
-    <!-- リセット・保存ボタン -->
-    <div class="action-buttons text-center">
-      <button id="resetBtn" class="btn btn-warning mr-3">リセット</button>
-      <button id="saveBtn" class="btn btn-success">保存</button>
-    </div>
-  </div>
+    <section id="boardArea" class="board-grid" aria-live="polite"></section>
+  </main>
 
   <script>
-    let currentEvent = { number: null, startTime: null };
+    const defaultSimpleStages = ["未完了", "完了"];
+    const defaultStepStages = ["未着手", "準備", "作業中", "提出"];
+    let boardState = {
+      numbers: [],
+      stages: defaultSimpleStages,
+      positions: new Map(),
+      history: []
+    };
 
-    function formatTimeOnly(date) {
-      const pad = (n) => ('0' + n).slice(-2);
-      return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    const startNumberInput = document.getElementById("startNumber");
+    const endNumberInput = document.getElementById("endNumber");
+    const simpleModeInput = document.getElementById("simpleMode");
+    const stepsModeInput = document.getElementById("stepsMode");
+    const simpleModeLabel = document.getElementById("simpleModeLabel");
+    const stepsModeLabel = document.getElementById("stepsModeLabel");
+    const stepsSettings = document.getElementById("stepsSettings");
+    const stageCountInput = document.getElementById("stageCount");
+    const stageNameInputs = document.getElementById("stageNameInputs");
+    const statusText = document.getElementById("statusText");
+    const summaryText = document.getElementById("summaryText");
+    const historyList = document.getElementById("historyList");
+    const boardArea = document.getElementById("boardArea");
+    const undoBtn = document.getElementById("undoBtn");
+
+    function clampStageCount(value) {
+      const parsed = parseInt(value, 10);
+      if (Number.isNaN(parsed)) return 2;
+      return Math.min(Math.max(parsed, 2), 8);
     }
 
-    function getDurationString(start, end) {
-      let diff = Math.floor((end - start) / 1000);
-      const m = ('0' + Math.floor(diff / 60)).slice(-2);
-      const s = ('0' + (diff % 60)).slice(-2);
-      return `${m}:${s}`;
+    function getMode() {
+      return stepsModeInput.checked ? "steps" : "simple";
     }
 
-    document.getElementById("createTableBtn").addEventListener("click", function () {
-      const start = parseInt(document.getElementById("startNumber").value);
-      const end = parseInt(document.getElementById("endNumber").value);
-      if (isNaN(start) || isNaN(end) || start > end) {
+    function getStageDefaults(count) {
+      const fallback = ["未着手", "準備", "作業中", "確認", "直し", "提出", "返却", "完了"];
+      return Array.from({ length: count }, (_, index) => defaultStepStages[index] || fallback[index] || `${index + 1}段階目`);
+    }
+
+    function renderStageNameInputs() {
+      const count = clampStageCount(stageCountInput.value);
+      stageCountInput.value = count;
+      const currentNames = Array.from(stageNameInputs.querySelectorAll("input")).map((input) => input.value.trim());
+      const defaults = getStageDefaults(count);
+      stageNameInputs.innerHTML = "";
+
+      for (let i = 0; i < count; i++) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "form-group mb-0";
+        const label = document.createElement("label");
+        label.className = "small font-weight-bold";
+        label.setAttribute("for", `stageName-${i}`);
+        label.textContent = `${i + 1}枠目`;
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "form-control";
+        input.id = `stageName-${i}`;
+        input.value = currentNames[i] || defaults[i];
+        wrapper.appendChild(label);
+        wrapper.appendChild(input);
+        stageNameInputs.appendChild(wrapper);
+      }
+    }
+
+    function setMode(mode) {
+      const isSteps = mode === "steps";
+      simpleModeInput.checked = !isSteps;
+      stepsModeInput.checked = isSteps;
+      simpleModeLabel.classList.toggle("active", !isSteps);
+      stepsModeLabel.classList.toggle("active", isSteps);
+      stepsSettings.style.display = isSteps ? "block" : "none";
+      if (isSteps && stageNameInputs.children.length === 0) {
+        renderStageNameInputs();
+      }
+    }
+
+    function getStageNames() {
+      if (getMode() === "simple") return defaultSimpleStages;
+      const count = clampStageCount(stageCountInput.value);
+      const defaults = getStageDefaults(count);
+      return Array.from({ length: count }, (_, index) => {
+        const input = document.getElementById(`stageName-${index}`);
+        return (input && input.value.trim()) || defaults[index];
+      });
+    }
+
+    function validateRange(start, end) {
+      if (Number.isNaN(start) || Number.isNaN(end) || start < 1 || end < 1 || start > end) {
         alert("開始番号と終了番号を正しく入力してください。");
-        return;
+        return false;
       }
-
-      let html = '';
-      html += '<div class="card">';
-      html += '<div class="card-header">式次記録テーブル (' + start + ' ～ ' + end + ')</div>';
-      html += '<div class="card-body p-0">';
-      html += '<table class="table table-bordered table-hover m-0">';
-      html += '<thead class="thead-light">';
-      html += '<tr><th>式次番号</th><th>内容</th><th>開始</th><th>終了</th><th>所要時間</th><th>操作</th></tr>';
-      html += '</thead><tbody>';
-      for (let i = start; i <= end; i++) {
-        html += '<tr id="row-' + i + '">';
-        html += '<td>' + i + '</td>';
-        html += '<td><input type="text" class="form-control form-control-sm" id="content-' + i + '" placeholder="内容を入力"></td>';
-        html += '<td id="start-' + i + '">-</td>';
-        html += '<td id="stop-' + i + '">-</td>';
-        html += '<td id="duration-' + i + '">-</td>';
-        html += '<td>';
-        html += '<button class="btn btn-sm btn-success" onclick="startTimer(' + i + ')" id="btn-start-' + i + '">Start</button>';
-        html += '<button class="btn btn-sm btn-danger" onclick="stopTimer(' + i + ')" id="btn-stop-' + i + '" disabled>Stop</button>';
-        html += '</td></tr>';
+      if (end - start > 99) {
+        alert("一度に表示できる番号は100個までです。");
+        return false;
       }
-      html += '</tbody></table></div></div>';
-      document.getElementById("tableArea").innerHTML = html;
-      currentEvent = { number: null, startTime: null };
-      document.getElementById("globalStatus").textContent = "テーブル作成完了。計測待機中";
-    });
-
-    function startTimer(n) {
-      if (currentEvent.startTime !== null) {
-        alert("式次 " + currentEvent.number + " が進行中です。");
-        return;
-      }
-      const now = new Date();
-      document.getElementById("start-" + n).textContent = formatTimeOnly(now);
-      document.getElementById("btn-start-" + n).disabled = true;
-      document.getElementById("btn-stop-" + n).disabled = false;
-      currentEvent = { number: n, startTime: now };
-      document.getElementById("globalStatus").textContent = `式次 ${n} の計測開始: ${formatTimeOnly(now)}`;
+      return true;
     }
 
-    function stopTimer(n) {
-      if (currentEvent.number !== n) {
-        alert("この式次は現在計測中ではありません。");
-        return;
-      }
-      const now = new Date();
-      const start = currentEvent.startTime;
-      document.getElementById("stop-" + n).textContent = formatTimeOnly(now);
-      document.getElementById("duration-" + n).textContent = getDurationString(start, now);
-      document.getElementById("btn-stop-" + n).disabled = true;
-      currentEvent = { number: null, startTime: null };
-      document.getElementById("globalStatus").textContent = `式次 ${n} の計測完了: 所要時間 ${getDurationString(start, now)}`;
+    function createBoard() {
+      const start = parseInt(startNumberInput.value, 10);
+      const end = parseInt(endNumberInput.value, 10);
+      if (!validateRange(start, end)) return;
+
+      const numbers = [];
+      for (let n = start; n <= end; n++) numbers.push(n);
+
+      boardState = {
+        numbers,
+        stages: getStageNames(),
+        positions: new Map(numbers.map((n) => [n, 0])),
+        history: []
+      };
+
+      statusText.textContent = `${start}番から${end}番までのボードを作成しました。番号を押すと次の枠へ進みます。`;
+      renderBoard();
     }
 
-    document.getElementById("resetBtn").addEventListener("click", () => {
-      document.querySelectorAll("tr[id^='row-']").forEach(row => {
-        const n = row.id.split("-")[1];
-        document.getElementById("start-" + n).textContent = "-";
-        document.getElementById("stop-" + n).textContent = "-";
-        document.getElementById("duration-" + n).textContent = "-";
-        document.getElementById("content-" + n).value = "";
-        document.getElementById("btn-start-" + n).disabled = false;
-        document.getElementById("btn-stop-" + n).disabled = true;
-      });
-      currentEvent = { number: null, startTime: null };
-      document.getElementById("globalStatus").textContent = "リセット完了";
-    });
-
-    document.getElementById("saveBtn").addEventListener("click", () => {
-      let csv = "式次番号,内容,開始時刻,終了時刻,所要時間\n";
-      document.querySelectorAll("tr[id^='row-']").forEach(row => {
-        const n = row.id.split("-")[1];
-        const content = document.getElementById("content-" + n).value;
-        const start = document.getElementById("start-" + n).textContent;
-        const stop = document.getElementById("stop-" + n).textContent;
-        const duration = document.getElementById("duration-" + n).textContent;
-        csv += `${n},"${content}",${start},${stop},${duration}\n`;
-      });
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.setAttribute("download", "shikijidai_records.csv");
-
-      if (typeof a.download === "undefined") {
-        window.location.href = url;
-      } else {
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+    function moveNumber(number) {
+      const currentStage = boardState.positions.get(number);
+      if (currentStage === undefined) return;
+      const nextStage = Math.min(currentStage + 1, boardState.stages.length - 1);
+      if (nextStage === currentStage) {
+        statusText.textContent = `${number}番はすでに「${boardState.stages[currentStage]}」です。`;
+        return;
       }
-      URL.revokeObjectURL(url);
-    });
 
-    window.startTimer = startTimer;
-    window.stopTimer = stopTimer;
+      boardState.positions.set(number, nextStage);
+      boardState.history.push({ number, from: currentStage, to: nextStage, time: new Date() });
+      statusText.textContent = `${number}番を「${boardState.stages[nextStage]}」へ移動しました。`;
+      renderBoard();
+    }
+
+    function undoLastMove() {
+      const lastMove = boardState.history.pop();
+      if (!lastMove) return;
+      boardState.positions.set(lastMove.number, lastMove.from);
+      statusText.textContent = `${lastMove.number}番を「${boardState.stages[lastMove.from]}」へ戻しました。`;
+      renderBoard();
+    }
+
+    function resetBoard() {
+      if (boardState.numbers.length === 0) {
+        statusText.textContent = "まだボードが作成されていません。";
+        return;
+      }
+      boardState.numbers.forEach((number) => boardState.positions.set(number, 0));
+      boardState.history = [];
+      statusText.textContent = "全員を最初の枠へ戻しました。";
+      renderBoard();
+    }
+
+    function renderBoard() {
+      boardArea.innerHTML = "";
+      boardState.stages.forEach((stageName, stageIndex) => {
+        const column = document.createElement("article");
+        column.className = "stage-column";
+
+        const header = document.createElement("div");
+        header.className = "stage-header d-flex justify-content-between align-items-center";
+        const title = document.createElement("h2");
+        title.className = "stage-title";
+        title.textContent = stageName;
+        const count = document.createElement("span");
+        count.className = "stage-count";
+        count.textContent = getNumbersInStage(stageIndex).length;
+        header.appendChild(title);
+        header.appendChild(count);
+
+        const zone = document.createElement("div");
+        zone.className = "magnet-zone";
+        zone.setAttribute("aria-label", `${stageName}の番号`);
+        const numbers = getNumbersInStage(stageIndex);
+        if (numbers.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty-message";
+          empty.textContent = "ここにはまだありません";
+          zone.appendChild(empty);
+        } else {
+          numbers.forEach((number) => zone.appendChild(createMagnetButton(number, stageIndex)));
+        }
+
+        column.appendChild(header);
+        column.appendChild(zone);
+        boardArea.appendChild(column);
+      });
+
+      updateSummary();
+    }
+
+    function getNumbersInStage(stageIndex) {
+      return boardState.numbers.filter((number) => boardState.positions.get(number) === stageIndex);
+    }
+
+    function createMagnetButton(number, stageIndex) {
+      const button = document.createElement("button");
+      const isDone = stageIndex === boardState.stages.length - 1;
+      button.type = "button";
+      button.className = `magnet-button stage-${stageIndex % 5}${isDone ? " done" : ""}`;
+      button.textContent = number;
+      button.title = isDone ? `${number}番は最終枠です` : `${number}番を次の枠へ進める`;
+      button.setAttribute("aria-label", button.title);
+      button.addEventListener("click", () => moveNumber(number));
+      return button;
+    }
+
+    function updateSummary() {
+      if (boardState.numbers.length === 0) {
+        summaryText.textContent = "未作成";
+        undoBtn.disabled = true;
+        historyList.innerHTML = "";
+        return;
+      }
+
+      const stageSummaries = boardState.stages.map((stageName, index) => `${stageName}: ${getNumbersInStage(index).length}人`);
+      summaryText.textContent = stageSummaries.join(" / ");
+      undoBtn.disabled = boardState.history.length === 0;
+      historyList.innerHTML = "";
+
+      boardState.history.slice(-5).reverse().forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = `${item.number}番: ${boardState.stages[item.from]} → ${boardState.stages[item.to]}`;
+        historyList.appendChild(li);
+      });
+    }
+
+    simpleModeInput.addEventListener("change", () => setMode("simple"));
+    stepsModeInput.addEventListener("change", () => setMode("steps"));
+    simpleModeLabel.addEventListener("click", () => setMode("simple"));
+    stepsModeLabel.addEventListener("click", () => setMode("steps"));
+    document.getElementById("updateStageNamesBtn").addEventListener("click", renderStageNameInputs);
+    stageCountInput.addEventListener("change", renderStageNameInputs);
+    document.getElementById("createBoardBtn").addEventListener("click", createBoard);
+    undoBtn.addEventListener("click", undoLastMove);
+    document.getElementById("resetBtn").addEventListener("click", resetBoard);
+
+    renderStageNameInputs();
+    createBoard();
   </script>
 </body>
 </html>
