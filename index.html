@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>フラッシュ暗算トレーナー</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0f172a;
+      --panel: rgba(15, 23, 42, 0.78);
+      --panel-strong: rgba(30, 41, 59, 0.94);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #a78bfa;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --border: rgba(148, 163, 184, 0.24);
+      --shadow: 0 24px 70px rgba(2, 6, 23, 0.45);
+      font-family: "Inter", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.32), transparent 32rem),
+        radial-gradient(circle at bottom right, rgba(167, 139, 250, 0.28), transparent 34rem),
+        var(--bg);
+    }
+
+    .app {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0;
+    }
+
+    header {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 0.86rem;
+      font-weight: 800;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.2rem, 7vw, 5rem);
+      line-height: 1;
+      letter-spacing: -0.07em;
+    }
+
+    .lead {
+      max-width: 720px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.8;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .settings { padding: 24px; }
+
+    .settings h2, .history h2 {
+      margin: 0 0 18px;
+      font-size: 1.15rem;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      margin: 16px 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    input, select, button {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 13px 14px;
+      color: var(--text);
+      background: rgba(15, 23, 42, 0.84);
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 900;
+      transition: transform 0.16s ease, filter 0.16s ease, opacity 0.16s ease;
+    }
+
+    button:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
+    button:disabled { cursor: not-allowed; opacity: 0.48; }
+
+    .primary {
+      border: 0;
+      color: #02111f;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    }
+
+    .secondary { background: rgba(30, 41, 59, 0.9); }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .stage {
+      display: grid;
+      min-height: 540px;
+      padding: clamp(22px, 4vw, 42px);
+      place-items: center;
+      text-align: center;
+    }
+
+    .display {
+      display: grid;
+      width: 100%;
+      min-height: 340px;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      background: var(--panel-strong);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .display::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent, rgba(255,255,255,0.08), transparent);
+      transform: translateX(-100%);
+    }
+
+    .display.playing::before { animation: shine 1.1s ease-in-out infinite; }
+    @keyframes shine { to { transform: translateX(100%); } }
+
+    .number {
+      font-size: clamp(4.2rem, 16vw, 12rem);
+      font-weight: 950;
+      line-height: 1;
+      letter-spacing: -0.08em;
+      text-shadow: 0 16px 46px rgba(56, 189, 248, 0.22);
+    }
+
+    .status {
+      min-height: 32px;
+      margin: 20px 0;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .answer-box {
+      display: grid;
+      grid-template-columns: 1fr 140px;
+      gap: 12px;
+      width: min(560px, 100%);
+      margin: 0 auto;
+    }
+
+    .answer-box input { font-size: 1.25rem; text-align: center; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      width: 100%;
+      margin-top: 22px;
+    }
+
+    .stat {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.52);
+    }
+
+    .stat strong { display: block; font-size: 1.55rem; }
+    .stat span { color: var(--muted); font-size: 0.82rem; font-weight: 800; }
+
+    .history { margin-top: 20px; padding: 24px; }
+    .history-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+
+    .history-item {
+      display: grid;
+      grid-template-columns: 92px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.42);
+      font-size: 0.92rem;
+    }
+
+    .badge { font-weight: 950; }
+    .correct { color: var(--good); }
+    .wrong { color: var(--bad); }
+
+    @media (max-width: 880px) {
+      .grid { grid-template-columns: 1fr; }
+      .answer-box { grid-template-columns: 1fr; }
+      .history-item { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="eyebrow">Flash Mental Arithmetic</div>
+      <h1>フラッシュ暗算</h1>
+      <p class="lead">表示される数字を頭の中で足し合わせ、最後に合計を入力します。桁数・出題数・表示速度・負の数の有無を調整して、毎日少しずつ計算力を鍛えましょう。</p>
+    </header>
+
+    <section class="grid" aria-label="フラッシュ暗算アプリ">
+      <aside class="card settings">
+        <h2>トレーニング設定</h2>
+        <div class="row">
+          <label>桁数
+            <select id="digits">
+              <option value="1">1桁</option>
+              <option value="2" selected>2桁</option>
+              <option value="3">3桁</option>
+              <option value="4">4桁</option>
+            </select>
+          </label>
+          <label>出題数
+            <input id="count" type="number" min="2" max="30" value="8" />
+          </label>
+        </div>
+        <div class="row">
+          <label>表示速度
+            <select id="speed">
+              <option value="1200">ゆっくり</option>
+              <option value="800" selected>ふつう</option>
+              <option value="500">速い</option>
+              <option value="300">超速</option>
+            </select>
+          </label>
+          <label>難易度
+            <select id="mode">
+              <option value="positive" selected>足し算のみ</option>
+              <option value="mixed">引き算あり</option>
+            </select>
+          </label>
+        </div>
+        <label>カウントダウン
+          <select id="countdown">
+            <option value="3" selected>3秒</option>
+            <option value="2">2秒</option>
+            <option value="1">1秒</option>
+            <option value="0">なし</option>
+          </select>
+        </label>
+        <button id="startButton" class="primary">スタート</button>
+        <button id="resetButton" class="secondary" style="margin-top: 12px;">履歴をリセット</button>
+      </aside>
+
+      <section class="card stage">
+        <div style="width: 100%;">
+          <div id="display" class="display" aria-live="polite">
+            <div id="flashNumber" class="number">Ready</div>
+          </div>
+          <p id="status" class="status">設定を選んでスタートしてください。</p>
+          <form id="answerForm" class="answer-box">
+            <input id="answer" type="number" inputmode="numeric" placeholder="合計を入力" disabled />
+            <button id="submitButton" class="primary" disabled>答え合わせ</button>
+          </form>
+          <div class="stats" aria-label="成績">
+            <div class="stat"><strong id="totalGames">0</strong><span>挑戦回数</span></div>
+            <div class="stat"><strong id="bestStreak">0</strong><span>連続正解</span></div>
+            <div class="stat"><strong id="accuracy">0%</strong><span>正答率</span></div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="card history">
+      <h2>最近の結果</h2>
+      <ul id="history" class="history-list">
+        <li class="history-item"><span class="badge">未挑戦</span><span>ここに結果が表示されます。</span><span>-</span></li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    const elements = {
+      digits: document.getElementById('digits'),
+      count: document.getElementById('count'),
+      speed: document.getElementById('speed'),
+      mode: document.getElementById('mode'),
+      countdown: document.getElementById('countdown'),
+      startButton: document.getElementById('startButton'),
+      resetButton: document.getElementById('resetButton'),
+      display: document.getElementById('display'),
+      flashNumber: document.getElementById('flashNumber'),
+      status: document.getElementById('status'),
+      answerForm: document.getElementById('answerForm'),
+      answer: document.getElementById('answer'),
+      submitButton: document.getElementById('submitButton'),
+      totalGames: document.getElementById('totalGames'),
+      bestStreak: document.getElementById('bestStreak'),
+      accuracy: document.getElementById('accuracy'),
+      history: document.getElementById('history')
+    };
+
+    const state = {
+      sequence: [],
+      total: 0,
+      isPlaying: false,
+      games: 0,
+      correct: 0,
+      streak: 0,
+      bestStreak: 0,
+      history: []
+    };
+
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    function randomNumber(digits, mode) {
+      const min = digits === 1 ? 1 : 10 ** (digits - 1);
+      const max = (10 ** digits) - 1;
+      const value = Math.floor(Math.random() * (max - min + 1)) + min;
+      return mode === 'mixed' && Math.random() < 0.35 ? -value : value;
+    }
+
+    function setControls(disabled) {
+      [elements.digits, elements.count, elements.speed, elements.mode, elements.countdown, elements.startButton].forEach(el => {
+        el.disabled = disabled;
+      });
+    }
+
+    function renderStats() {
+      elements.totalGames.textContent = state.games;
+      elements.bestStreak.textContent = state.bestStreak;
+      elements.accuracy.textContent = state.games ? `${Math.round((state.correct / state.games) * 100)}%` : '0%';
+    }
+
+    function renderHistory() {
+      if (state.history.length === 0) {
+        elements.history.innerHTML = '<li class="history-item"><span class="badge">未挑戦</span><span>ここに結果が表示されます。</span><span>-</span></li>';
+        return;
+      }
+      elements.history.innerHTML = state.history.map(item => `
+        <li class="history-item">
+          <span class="badge ${item.ok ? 'correct' : 'wrong'}">${item.ok ? '正解' : '不正解'}</span>
+          <span>問題: ${item.sequence.join(' + ').replaceAll('+ -', '- ')} / 正答: ${item.total} / 回答: ${item.answer}</span>
+          <span>${item.time}</span>
+        </li>
+      `).join('');
+    }
+
+    async function startGame() {
+      if (state.isPlaying) return;
+      const digits = Number(elements.digits.value);
+      const count = Math.max(2, Math.min(30, Number(elements.count.value) || 8));
+      const speed = Number(elements.speed.value);
+      const mode = elements.mode.value;
+      const countdown = Number(elements.countdown.value);
+
+      elements.count.value = count;
+      state.sequence = Array.from({ length: count }, () => randomNumber(digits, mode));
+      state.total = state.sequence.reduce((sum, n) => sum + n, 0);
+      state.isPlaying = true;
+      elements.answer.value = '';
+      elements.answer.disabled = true;
+      elements.submitButton.disabled = true;
+      setControls(true);
+      elements.display.classList.add('playing');
+
+      for (let i = countdown; i > 0; i--) {
+        elements.flashNumber.textContent = i;
+        elements.status.textContent = 'まもなく開始します…';
+        await sleep(800);
+      }
+
+      for (let i = 0; i < state.sequence.length; i++) {
+        elements.flashNumber.textContent = state.sequence[i];
+        elements.status.textContent = `${i + 1} / ${state.sequence.length}`;
+        await sleep(speed);
+        elements.flashNumber.textContent = '';
+        await sleep(Math.min(160, speed / 3));
+      }
+
+      elements.display.classList.remove('playing');
+      elements.flashNumber.textContent = '?';
+      elements.status.textContent = '合計を入力してください。';
+      elements.answer.disabled = false;
+      elements.submitButton.disabled = false;
+      elements.answer.focus();
+      state.isPlaying = false;
+    }
+
+    function submitAnswer(event) {
+      event.preventDefault();
+      if (elements.answer.disabled) return;
+      const answer = Number(elements.answer.value);
+      const ok = answer === state.total;
+      state.games += 1;
+      state.correct += ok ? 1 : 0;
+      state.streak = ok ? state.streak + 1 : 0;
+      state.bestStreak = Math.max(state.bestStreak, state.streak);
+      state.history.unshift({
+        ok,
+        answer: elements.answer.value === '' ? '未入力' : answer,
+        total: state.total,
+        sequence: state.sequence,
+        time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+      });
+      state.history = state.history.slice(0, 8);
+
+      elements.flashNumber.textContent = ok ? '正解!' : state.total;
+      elements.status.textContent = ok ? 'すばらしい集中力です。' : `惜しい！正しい答えは ${state.total} でした。`;
+      elements.answer.disabled = true;
+      elements.submitButton.disabled = true;
+      setControls(false);
+      renderStats();
+      renderHistory();
+    }
+
+    function resetHistory() {
+      Object.assign(state, { games: 0, correct: 0, streak: 0, bestStreak: 0, history: [] });
+      elements.flashNumber.textContent = 'Ready';
+      elements.status.textContent = '履歴をリセットしました。';
+      renderStats();
+      renderHistory();
+    }
+
+    elements.startButton.addEventListener('click', startGame);
+    elements.answerForm.addEventListener('submit', submitAnswer);
+    elements.resetButton.addEventListener('click', resetHistory);
+    renderStats();
+  </script>
+</body>
+</html>
