@@ -2,259 +2,931 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>ルーレット</title>
     <style>
-        /* ルーレットとボタンのスタイル設定 */
+        :root {
+            --bg-1: #101827;
+            --bg-2: #18233d;
+            --panel: rgba(255, 255, 255, 0.13);
+            --panel-strong: rgba(255, 255, 255, 0.2);
+            --text: #ffffff;
+            --muted: rgba(255, 255, 255, 0.72);
+            --accent: #ffd166;
+            --accent-2: #5eead4;
+            --danger: #ff6b6b;
+            --shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
+            width: 100%;
+            min-height: 100%;
+            margin: 0;
         }
-        #roulette {
-            margin: 50px auto;
-            width: 500px;
-            height: 500px;
+
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 18% 10%, rgba(94, 234, 212, 0.26), transparent 34%),
+                radial-gradient(circle at 84% 18%, rgba(255, 209, 102, 0.24), transparent 34%),
+                linear-gradient(135deg, var(--bg-1), var(--bg-2));
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+            background-size: 42px 42px;
+            mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), transparent 88%);
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            color: var(--text);
+            touch-action: manipulation;
+        }
+
+        .app-shell {
             position: relative;
-        }
-        #canvas {
-            border: 10px solid #ccc;
-            border-radius: 50%;
-        }
-        #pointer {
-            width: 0; 
-            height: 0; 
-            border-left: 30px solid transparent;
-            border-right: 30px solid transparent;
-            border-top: 60px solid red;
-            position: absolute;
-            top: -55px;
-            left: 220px;
             z-index: 1;
+            min-height: 100svh;
+            padding: clamp(14px, 2vw, 28px);
         }
-        #startButton, #stopButton, #editButton {
-            font-size: 20px;
-            padding: 10px 20px;
-            margin: 10px;
+
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin: 0 auto clamp(14px, 2vh, 24px);
+            max-width: 1360px;
         }
+
+        .title-block {
+            text-align: left;
+        }
+
+        h1,
+        h2 {
+            margin: 0;
+            line-height: 1.05;
+            letter-spacing: 0.03em;
+        }
+
+        h1 {
+            font-size: clamp(2.2rem, 5vw, 5rem);
+            text-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+        }
+
+        h2 {
+            font-size: clamp(1.9rem, 4vw, 3.8rem);
+        }
+
+        .subtitle {
+            margin: 10px 0 0;
+            color: var(--muted);
+            font-size: clamp(0.95rem, 1.7vw, 1.35rem);
+            font-weight: 700;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+            font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-2);
+            box-shadow: 0 0 18px var(--accent-2);
+        }
+
+        #mainPage {
+            max-width: 1360px;
+            margin: 0 auto;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+            gap: clamp(16px, 2vw, 28px);
+            align-items: center;
+        }
+
+        .roulette-card,
+        .control-card,
+        #editPage {
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07));
+            backdrop-filter: blur(18px);
+            box-shadow: var(--shadow);
+            border-radius: clamp(22px, 3vw, 38px);
+        }
+
+        .roulette-card {
+            position: relative;
+            display: grid;
+            place-items: center;
+            min-height: min(78svh, 900px);
+            padding: clamp(16px, 2.5vw, 36px);
+            overflow: hidden;
+        }
+
+        .roulette-card::after {
+            content: "";
+            position: absolute;
+            inset: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: clamp(18px, 2.5vw, 30px);
+            pointer-events: none;
+        }
+
+        #roulette {
+            position: relative;
+            width: min(82svh, 74vw, 820px);
+            height: min(82svh, 74vw, 820px);
+            min-width: 300px;
+            min-height: 300px;
+            filter: drop-shadow(0 30px 45px rgba(0, 0, 0, 0.38));
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.94);
+        }
+
+        #pointer {
+            position: absolute;
+            top: -1.8%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 4;
+            width: clamp(54px, 8vw, 94px);
+            height: clamp(70px, 10vw, 118px);
+            filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.34));
+        }
+
+        #pointer::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+            background: linear-gradient(180deg, #fff7ad 0%, #ffba08 42%, #f97316 100%);
+            border-radius: 18px 18px 8px 8px;
+        }
+
+        #pointer::after {
+            content: "";
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            width: 28%;
+            height: 32%;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateX(-50%);
+        }
+
+        .wheel-center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3;
+            display: grid;
+            place-items: center;
+            width: 18%;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 25%, #ffffff, #ffd166 52%, #f59e0b 100%);
+            border: 8px solid rgba(255, 255, 255, 0.92);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28), inset 0 -8px 14px rgba(146, 64, 14, 0.25);
+            color: #7c2d12;
+            font-weight: 1000;
+            font-size: clamp(0.9rem, 2vw, 1.7rem);
+            letter-spacing: 0.06em;
+            pointer-events: none;
+        }
+
+        .control-card {
+            padding: clamp(18px, 2.4vw, 28px);
+        }
+
+        .result-preview {
+            min-height: 132px;
+            display: grid;
+            align-content: center;
+            gap: 8px;
+            padding: clamp(18px, 2vw, 24px);
+            border-radius: 28px;
+            background: rgba(0, 0, 0, 0.24);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            text-align: left;
+            margin-bottom: 18px;
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-weight: 800;
+            font-size: 0.98rem;
+        }
+
+        #currentResult {
+            font-size: clamp(1.7rem, 3.2vw, 3.4rem);
+            line-height: 1.05;
+            font-weight: 1000;
+            overflow-wrap: anywhere;
+        }
+
+        .button-stack {
+            display: grid;
+            gap: 12px;
+        }
+
+        .primary-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            position: relative;
+            overflow: hidden;
+            min-height: clamp(58px, 8vh, 86px);
+            padding: 14px 18px;
+            border-radius: 24px;
+            font-size: clamp(1.08rem, 2vw, 1.7rem);
+            font-weight: 1000;
+            letter-spacing: 0.04em;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 34px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(1px) scale(0.99);
+            filter: brightness(0.95);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #22c55e, #14b8a6);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #ff6b6b, #f97316);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.12));
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .btn-small {
+            min-height: 48px;
+            border-radius: 18px;
+            font-size: 1rem;
+            padding: 10px 14px;
+        }
+
+        .hint {
+            margin: 16px 0 0;
+            color: var(--muted);
+            font-size: clamp(0.88rem, 1.25vw, 1rem);
+            line-height: 1.6;
+            text-align: left;
+        }
+
         #editPage {
             display: none;
+            position: relative;
+            z-index: 2;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: clamp(18px, 3vw, 34px);
         }
+
+        .edit-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .edit-tools {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            padding: 14px;
+            border-radius: 24px;
+            background: rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            margin-bottom: 18px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            min-height: 54px;
+            border: 2px solid rgba(255, 255, 255, 0.18);
+            border-radius: 18px;
+            padding: 12px 16px;
+            color: #0f172a;
+            background: rgba(255, 255, 255, 0.94);
+            font-size: clamp(1rem, 1.5vw, 1.18rem);
+            font-weight: 800;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(255, 209, 102, 0.22);
+        }
+
         #itemList {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
             list-style: none;
             padding: 0;
+            margin: 0 0 20px;
+            max-height: 56svh;
+            overflow: auto;
+            scrollbar-width: thin;
         }
+
         #itemList li {
-            margin: 5px 0;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.13);
+            border: 1px solid rgba(255, 255, 255, 0.13);
         }
-        /* ポップアップのスタイル */
+
+        .item-number {
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.18);
+            font-weight: 1000;
+            color: var(--accent);
+        }
+
+        .delete-button {
+            min-height: 44px;
+            border-radius: 14px;
+            padding: 8px 12px;
+            background: rgba(255, 107, 107, 0.9);
+            font-weight: 900;
+        }
+
+        .edit-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
         #resultPopup {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            inset: 0;
+            z-index: 10;
+            place-items: center;
+            padding: 24px;
+            background: rgba(3, 7, 18, 0.78);
+            backdrop-filter: blur(12px);
         }
+
         #resultPopupContent {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            padding: 50px;
-            border-radius: 10px;
-            font-size: 30px;
+            width: min(920px, 92vw);
+            min-height: min(420px, 62svh);
+            display: grid;
+            place-items: center;
+            gap: 20px;
+            padding: clamp(28px, 5vw, 64px);
+            border-radius: clamp(28px, 5vw, 54px);
+            text-align: center;
+            background:
+                radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.42), transparent 28%),
+                linear-gradient(135deg, #ffffff, #fff7ed);
+            color: #111827;
+            box-shadow: 0 36px 90px rgba(0, 0, 0, 0.48);
+            border: 10px solid rgba(255, 209, 102, 0.92);
+            animation: popIn 0.28s ease-out;
+        }
+
+        .popup-label {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            border-radius: 999px;
+            color: #92400e;
+            background: #ffedd5;
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            font-weight: 1000;
+            letter-spacing: 0.12em;
+        }
+
+        .popup-result {
+            font-size: clamp(3rem, 10vw, 8rem);
+            line-height: 1.05;
+            font-weight: 1000;
+            overflow-wrap: anywhere;
+        }
+
+        .popup-help {
+            color: #64748b;
+            font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+            font-weight: 800;
+        }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @media (max-width: 940px) {
+            .hero {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .roulette-card {
+                min-height: auto;
+            }
+
+            #roulette {
+                width: min(86svh, 92vw, 720px);
+                height: min(86svh, 92vw, 720px);
+            }
+
+            .control-card {
+                display: grid;
+                grid-template-columns: minmax(220px, 1fr) minmax(280px, 1.3fr);
+                gap: 14px;
+                align-items: stretch;
+            }
+
+            .result-preview {
+                margin-bottom: 0;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .app-shell {
+                padding: 12px;
+            }
+
+            .control-card {
+                grid-template-columns: 1fr;
+            }
+
+            .primary-actions,
+            .edit-tools {
+                grid-template-columns: 1fr;
+            }
+
+            .edit-header {
+                flex-direction: column;
+            }
+
+            #itemList {
+                grid-template-columns: 1fr;
+                max-height: 50svh;
+            }
+        }
+
+        @media (display-mode: fullscreen), (min-width: 1200px) and (min-height: 760px) {
+            .app-shell {
+                padding: clamp(18px, 2.2vw, 34px);
+            }
+
+            .roulette-card {
+                min-height: calc(100svh - 170px);
+            }
         }
     </style>
 </head>
 <body>
+    <div class="app-shell">
+        <header class="hero">
+            <div class="title-block">
+                <h1>ルーレット</h1>
+                <p class="subtitle">大きく・明るく・全画面で見やすい教室用ルーレット</p>
+            </div>
+            <div class="status-pill" aria-live="polite"><span class="status-dot"></span><span id="itemCountLabel">0項目</span></div>
+        </header>
 
-<h1>ルーレット</h1>
-<div id="mainPage">
-    <div id="roulette">
-        <div id="pointer"></div>
-        <canvas id="canvas" width="500" height="500"></canvas>
+        <main id="mainPage">
+            <div class="main-grid">
+                <section class="roulette-card" aria-label="ルーレット">
+                    <div id="roulette">
+                        <div id="pointer" aria-hidden="true"></div>
+                        <canvas id="canvas"></canvas>
+                        <div class="wheel-center">GO</div>
+                    </div>
+                </section>
+
+                <aside class="control-card">
+                    <div class="result-preview">
+                        <div class="result-label">前回の結果</div>
+                        <div id="currentResult">まだありません</div>
+                    </div>
+                    <div class="button-stack">
+                        <div class="primary-actions">
+                            <button id="startButton" class="btn btn-primary">スタート</button>
+                            <button id="stopButton" class="btn btn-stop">ストップ</button>
+                        </div>
+                        <button id="editButton" class="btn btn-secondary">項目を編集</button>
+                        <button id="fullscreenButton" class="btn btn-secondary">全画面表示</button>
+                    </div>
+                    <p class="hint">項目を編集して保存すると、この端末に記録されます。結果画面はタップすると閉じます。</p>
+                </aside>
+            </div>
+        </main>
+
+        <section id="editPage" aria-label="ルーレット編集">
+            <div class="edit-header">
+                <div>
+                    <h2>項目を編集</h2>
+                    <p class="subtitle">名前・番号・活動内容など、ルーレットに入れたい項目を設定できます。</p>
+                </div>
+                <div class="status-pill"><span class="status-dot"></span><span id="editItemCountLabel">0項目</span></div>
+            </div>
+
+            <div class="edit-tools">
+                <input type="text" id="newItem" placeholder="追加する項目を入力">
+                <button id="addItemButton" class="btn btn-primary btn-small">追加</button>
+            </div>
+
+            <ul id="itemList"></ul>
+
+            <div class="edit-actions">
+                <button id="cancelButton" class="btn btn-secondary btn-small">戻る</button>
+                <button id="saveButton" class="btn btn-primary btn-small">保存して反映</button>
+            </div>
+        </section>
     </div>
-    <button id="startButton">スタート</button>
-    <button id="stopButton">ストップ</button>
-    <button id="editButton">編集</button>
-</div>
 
-<div id="editPage">
-    <h2>ルーレット編集</h2>
-    <ul id="itemList"></ul>
-    <input type="text" id="newItem" placeholder="項目名を入力">
-    <button id="addItemButton">追加</button>
-    <br><br>
-    <button id="saveButton">保存</button>
-    <button id="cancelButton">キャンセル</button>
-</div>
+    <div id="resultPopup" role="dialog" aria-modal="true" aria-label="結果">
+        <div id="resultPopupContent"></div>
+    </div>
 
-<!-- 結果ポップアップ -->
-<div id="resultPopup">
-    <div id="resultPopupContent"></div>
-</div>
+    <script>
+        let items = [];
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const roulette = document.getElementById('roulette');
+        let startAngle = 0;
+        let spinTimeout = null;
+        let spinAngle = 0;
+        let isSpinning = false;
+        let canvasSize = 900;
 
-<script>
-    // ルーレット機能のJavaScriptコード
-
-    // 初期化
-    let items = [];
-    let canvas = document.getElementById('canvas');
-    let ctx = canvas.getContext('2d');
-    let startAngle = 0;
-    let spinTimeout = null;
-    let spinAngle = 0;
-    let isSpinning = false;
-
-    // localStorageから保存された項目を読み込む
-    if (localStorage.getItem('rouletteItems')) {
-        items = JSON.parse(localStorage.getItem('rouletteItems'));
-    } else {
-        // デフォルトの項目
-        items = ["アイテム1", "アイテム2", "アイテム3", "アイテム4", "アイテム5", "アイテム6", "アイテム7", "アイテム8", "アイテム9", "アイテム10", "アイテム11", "アイテム12"];
-    }
-
-    drawRouletteWheel();
-
-    // イベントリスナーの設定
-    document.getElementById('startButton').addEventListener('click', startSpin);
-    document.getElementById('stopButton').addEventListener('click', stopSpin);
-    document.getElementById('editButton').addEventListener('click', showEditPage);
-    document.getElementById('saveButton').addEventListener('click', saveItems);
-    document.getElementById('cancelButton').addEventListener('click', hideEditPage);
-    document.getElementById('addItemButton').addEventListener('click', addItem);
-    document.getElementById('resultPopup').addEventListener('click', function() {
-        this.style.display = 'none';
-    });
-
-    function drawRouletteWheel() {
-        let outsideRadius = 240;
-        let textRadius = 200;
-        let insideRadius = 0;
-
-        ctx.clearRect(0, 0, 500, 500);
-
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 2;
-
-        let totalItems = items.length;
-        let arc = 2 * Math.PI / totalItems;
-
-        for(let i = 0; i < totalItems; i++) {
-            let angle = startAngle + i * arc;
-            ctx.fillStyle = getColor(i, totalItems);
-
-            ctx.beginPath();
-            ctx.arc(250, 250, outsideRadius, angle, angle + arc, false);
-            ctx.lineTo(250, 250);
-            ctx.fill();
-
-            ctx.save();
-            ctx.fillStyle = "black";
-            ctx.translate(250 + Math.cos(angle + arc / 2) * textRadius, 250 + Math.sin(angle + arc / 2) * textRadius);
-            ctx.rotate(angle + arc / 2 + Math.PI / 2);
-            let text = items[i];
-            ctx.fillText(text, -ctx.measureText(text).width / 2, 0);
-            ctx.restore();
-        }
-    }
-
-    function getColor(item, maxItem) {
-        let colors = ["#FF5733", "#33FF57", "#3357FF", "#F3FF33", "#FF33F3", "#33FFF3"];
-        return colors[item % colors.length];
-    }
-
-    function spin() {
-        startAngle += spinAngle * Math.PI / 180;
-        drawRouletteWheel();
-        spinTimeout = requestAnimationFrame(spin);
-    }
-
-    function startSpin() {
-        if(isSpinning) return;
-        isSpinning = true;
-        spinAngle = Math.random() * 5 + 10; // 回転速度
-        spin();
-    }
-
-    function stopSpin() {
-        if(!isSpinning) return;
-        // 徐々に減速する
-        function slowDown() {
-            if (spinAngle > 0.2) {
-                spinAngle *= 0.97; // 減速率
-                requestAnimationFrame(slowDown);
-            } else {
-                cancelAnimationFrame(spinTimeout);
-                isSpinning = false;
-                displayResult();
+        if (localStorage.getItem('rouletteItems')) {
+            try {
+                items = JSON.parse(localStorage.getItem('rouletteItems')) || [];
+            } catch (error) {
+                items = [];
             }
         }
-        slowDown();
-    }
 
-    function displayResult() {
-        // 結果を計算してポップアップで表示
-        let degrees = startAngle * 180 / Math.PI + 90;
-        let arcd = 360 / items.length;
-        let index = Math.floor((360 - degrees % 360) / arcd) % items.length;
-        let text = items[index];
-        document.getElementById('resultPopupContent').innerText = "結果: " + text;
-        document.getElementById('resultPopup').style.display = 'block';
-    }
-
-    function showEditPage() {
-        document.getElementById('mainPage').style.display = 'none';
-        document.getElementById('editPage').style.display = 'block';
-        updateItemList();
-    }
-
-    function hideEditPage() {
-        document.getElementById('editPage').style.display = 'none';
-        document.getElementById('mainPage').style.display = 'block';
-        drawRouletteWheel();
-    }
-
-    function updateItemList() {
-        let itemList = document.getElementById('itemList');
-        itemList.innerHTML = '';
-        for(let i = 0; i < items.length; i++) {
-            let li = document.createElement('li');
-            let input = document.createElement('input');
-            input.type = 'text';
-            input.value = items[i];
-            input.dataset.index = i;
-            input.addEventListener('change', function() {
-                items[this.dataset.index] = this.value;
-            });
-            let deleteButton = document.createElement('button');
-            deleteButton.textContent = '削除';
-            deleteButton.dataset.index = i;
-            deleteButton.addEventListener('click', function() {
-                items.splice(this.dataset.index, 1);
-                updateItemList();
-            });
-            li.appendChild(input);
-            li.appendChild(deleteButton);
-            itemList.appendChild(li);
+        if (!items.length) {
+            items = ["アイテム1", "アイテム2", "アイテム3", "アイテム4", "アイテム5", "アイテム6", "アイテム7", "アイテム8", "アイテム9", "アイテム10", "アイテム11", "アイテム12"];
         }
-    }
 
-    function addItem() {
-        let newItem = document.getElementById('newItem').value.trim();
-        if(newItem) {
-            items.push(newItem);
-            document.getElementById('newItem').value = '';
+        document.getElementById('startButton').addEventListener('click', startSpin);
+        document.getElementById('stopButton').addEventListener('click', stopSpin);
+        document.getElementById('editButton').addEventListener('click', showEditPage);
+        document.getElementById('saveButton').addEventListener('click', saveItems);
+        document.getElementById('cancelButton').addEventListener('click', hideEditPage);
+        document.getElementById('addItemButton').addEventListener('click', addItem);
+        document.getElementById('fullscreenButton').addEventListener('click', toggleFullscreen);
+        document.getElementById('newItem').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') addItem();
+        });
+        document.getElementById('resultPopup').addEventListener('click', function() {
+            this.style.display = 'none';
+        });
+        window.addEventListener('resize', resizeCanvas);
+        document.addEventListener('fullscreenchange', function() {
+            document.getElementById('fullscreenButton').textContent = document.fullscreenElement ? '全画面を終了' : '全画面表示';
+            resizeCanvas();
+        });
+
+        resizeCanvas();
+        updateCountLabels();
+
+        function resizeCanvas() {
+            const rect = roulette.getBoundingClientRect();
+            const deviceRatio = window.devicePixelRatio || 1;
+            canvasSize = Math.max(360, Math.round(rect.width * deviceRatio));
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
+            drawRouletteWheel();
+        }
+
+        function drawRouletteWheel() {
+            const center = canvasSize / 2;
+            const outsideRadius = canvasSize * 0.47;
+            const textRadius = canvasSize * 0.36;
+            const innerRadius = canvasSize * 0.04;
+            const totalItems = Math.max(items.length, 1);
+            const arc = 2 * Math.PI / totalItems;
+
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(center, center, outsideRadius + canvasSize * 0.025, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.92)';
+            ctx.fill();
+            ctx.restore();
+
+            for (let i = 0; i < totalItems; i++) {
+                const angle = startAngle + i * arc;
+                const gradient = ctx.createRadialGradient(center, center, innerRadius, center, center, outsideRadius);
+                gradient.addColorStop(0, lightenColor(getColor(i), 28));
+                gradient.addColorStop(0.62, getColor(i));
+                gradient.addColorStop(1, darkenColor(getColor(i), 18));
+
+                ctx.beginPath();
+                ctx.arc(center, center, outsideRadius, angle, angle + arc, false);
+                ctx.arc(center, center, innerRadius, angle + arc, angle, true);
+                ctx.closePath();
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                ctx.lineWidth = Math.max(3, canvasSize * 0.006);
+                ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+                ctx.stroke();
+
+                drawText(items[i], angle, arc, textRadius, center, totalItems);
+            }
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(center, center, outsideRadius, 0, Math.PI * 2);
+            ctx.lineWidth = canvasSize * 0.028;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.98)';
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(center, center, outsideRadius - canvasSize * 0.02, 0, Math.PI * 2);
+            ctx.lineWidth = canvasSize * 0.008;
+            ctx.strokeStyle = 'rgba(15, 23, 42, 0.3)';
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawText(text, angle, arc, textRadius, center, totalItems) {
+            const cleanText = String(text || '').trim() || '未入力';
+            const fontSize = Math.max(18, Math.min(canvasSize * 0.058, canvasSize * 0.82 / Math.max(cleanText.length, 4), 48));
+            ctx.save();
+            ctx.translate(center + Math.cos(angle + arc / 2) * textRadius, center + Math.sin(angle + arc / 2) * textRadius);
+            ctx.rotate(angle + arc / 2 + Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = `900 ${fontSize}px "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif`;
+            ctx.lineWidth = Math.max(4, fontSize * 0.18);
+            ctx.strokeStyle = 'rgba(255,255,255,0.88)';
+            ctx.fillStyle = '#111827';
+
+            const maxWidth = Math.max(80, canvasSize * (totalItems > 10 ? 0.2 : 0.28));
+            const displayText = fitText(cleanText, maxWidth);
+            ctx.strokeText(displayText, 0, 0);
+            ctx.fillText(displayText, 0, 0);
+            ctx.restore();
+        }
+
+        function fitText(text, maxWidth) {
+            if (ctx.measureText(text).width <= maxWidth) return text;
+            let fitted = text;
+            while (fitted.length > 1 && ctx.measureText(fitted + '…').width > maxWidth) {
+                fitted = fitted.slice(0, -1);
+            }
+            return fitted + '…';
+        }
+
+        function getColor(index) {
+            const colors = [
+                '#ff6b6b', '#ffd166', '#06d6a0', '#4cc9f0', '#b5179e', '#f72585',
+                '#90be6d', '#f8961e', '#43aa8b', '#577590', '#9b5de5', '#00bbf9'
+            ];
+            return colors[index % colors.length];
+        }
+
+        function lightenColor(hex, amount) {
+            return adjustColor(hex, amount);
+        }
+
+        function darkenColor(hex, amount) {
+            return adjustColor(hex, -amount);
+        }
+
+        function adjustColor(hex, amount) {
+            const color = hex.replace('#', '');
+            const number = parseInt(color, 16);
+            let r = (number >> 16) + amount;
+            let g = ((number >> 8) & 0x00FF) + amount;
+            let b = (number & 0x0000FF) + amount;
+            r = Math.max(0, Math.min(255, r));
+            g = Math.max(0, Math.min(255, g));
+            b = Math.max(0, Math.min(255, b));
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function spin() {
+            startAngle += spinAngle * Math.PI / 180;
+            drawRouletteWheel();
+            spinTimeout = requestAnimationFrame(spin);
+        }
+
+        function startSpin() {
+            if (isSpinning || items.length === 0) return;
+            isSpinning = true;
+            document.getElementById('currentResult').textContent = '回転中...';
+            spinAngle = Math.random() * 5 + 12;
+            spin();
+        }
+
+        function stopSpin() {
+            if (!isSpinning) return;
+            function slowDown() {
+                if (spinAngle > 0.18) {
+                    spinAngle *= 0.965;
+                    requestAnimationFrame(slowDown);
+                } else {
+                    cancelAnimationFrame(spinTimeout);
+                    isSpinning = false;
+                    displayResult();
+                }
+            }
+            slowDown();
+        }
+
+        function displayResult() {
+            const degrees = startAngle * 180 / Math.PI + 90;
+            const arcd = 360 / items.length;
+            const index = Math.floor((360 - degrees % 360) / arcd) % items.length;
+            const text = items[index];
+            document.getElementById('currentResult').textContent = text;
+            document.getElementById('resultPopupContent').innerHTML = `
+                <div class="popup-label">結果</div>
+                <div class="popup-result">${escapeHtml(text)}</div>
+                <div class="popup-help">画面をタップすると閉じます</div>
+            `;
+            document.getElementById('resultPopup').style.display = 'grid';
+        }
+
+        function showEditPage() {
+            if (isSpinning) stopSpin();
+            document.getElementById('mainPage').style.display = 'none';
+            document.getElementById('editPage').style.display = 'block';
             updateItemList();
         }
-    }
 
-    function saveItems() {
-        localStorage.setItem('rouletteItems', JSON.stringify(items));
-        hideEditPage();
-    }
-</script>
+        function hideEditPage() {
+            document.getElementById('editPage').style.display = 'none';
+            document.getElementById('mainPage').style.display = 'block';
+            updateCountLabels();
+            requestAnimationFrame(resizeCanvas);
+        }
 
+        function updateItemList() {
+            const itemList = document.getElementById('itemList');
+            itemList.innerHTML = '';
+            items.forEach(function(item, index) {
+                const li = document.createElement('li');
+
+                const number = document.createElement('span');
+                number.className = 'item-number';
+                number.textContent = index + 1;
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = item;
+                input.dataset.index = index;
+                input.addEventListener('input', function() {
+                    items[this.dataset.index] = this.value;
+                    updateCountLabels();
+                });
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '削除';
+                deleteButton.className = 'delete-button';
+                deleteButton.dataset.index = index;
+                deleteButton.addEventListener('click', function() {
+                    if (items.length <= 2) {
+                        alert('項目は2つ以上必要です。');
+                        return;
+                    }
+                    items.splice(this.dataset.index, 1);
+                    updateItemList();
+                });
+
+                li.appendChild(number);
+                li.appendChild(input);
+                li.appendChild(deleteButton);
+                itemList.appendChild(li);
+            });
+            updateCountLabels();
+        }
+
+        function addItem() {
+            const input = document.getElementById('newItem');
+            const newItem = input.value.trim();
+            if (newItem) {
+                items.push(newItem);
+                input.value = '';
+                updateItemList();
+                input.focus();
+            }
+        }
+
+        function saveItems() {
+            items = items.map(item => String(item).trim()).filter(Boolean);
+            if (items.length < 2) {
+                alert('項目は2つ以上入力してください。');
+                return;
+            }
+            localStorage.setItem('rouletteItems', JSON.stringify(items));
+            hideEditPage();
+        }
+
+        function updateCountLabels() {
+            const label = `${items.length}項目`;
+            document.getElementById('itemCountLabel').textContent = label;
+            document.getElementById('editItemCountLabel').textContent = label;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen?.();
+            } else {
+                document.exitFullscreen?.();
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>'"]/g, function(char) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[char];
+            });
+        }
+    </script>
 </body>
 </html>
