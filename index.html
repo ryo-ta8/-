@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>フラッシュ暗算トレーナー</title>
+  <title>式で練習する暗算トレーナー</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -15,7 +15,6 @@
       --accent: #38bdf8;
       --accent-2: #a78bfa;
       --good: #34d399;
-      --warn: #fbbf24;
       --bad: #fb7185;
       --border: rgba(148, 163, 184, 0.24);
       --shadow: 0 24px 70px rgba(2, 6, 23, 0.45);
@@ -59,7 +58,7 @@
       margin: 0;
       font-size: clamp(2.2rem, 7vw, 5rem);
       line-height: 1;
-      letter-spacing: -0.07em;
+      letter-spacing: -0.04em;
     }
 
     .lead {
@@ -127,6 +126,8 @@
     }
 
     .secondary { background: rgba(30, 41, 59, 0.9); }
+    .success { border: 0; color: #052e1a; background: var(--good); }
+    .danger { border: 0; color: #3b0710; background: var(--bad); }
 
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
@@ -148,6 +149,7 @@
       background: var(--panel-strong);
       overflow: hidden;
       position: relative;
+      padding: 28px;
     }
 
     .display::before {
@@ -158,15 +160,25 @@
       transform: translateX(-100%);
     }
 
-    .display.playing::before { animation: shine 1.1s ease-in-out infinite; }
+    .display.thinking::before { animation: shine 1.1s ease-in-out infinite; }
     @keyframes shine { to { transform: translateX(100%); } }
 
-    .number {
-      font-size: clamp(4.2rem, 16vw, 12rem);
+    .expression {
+      position: relative;
+      z-index: 1;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      font-size: clamp(2.2rem, 8vw, 6.8rem);
       font-weight: 950;
-      line-height: 1;
-      letter-spacing: -0.08em;
+      line-height: 1.12;
       text-shadow: 0 16px 46px rgba(56, 189, 248, 0.22);
+    }
+
+    .answer {
+      display: block;
+      margin-top: 18px;
+      color: var(--good);
+      font-size: clamp(2rem, 7vw, 5.4rem);
     }
 
     .status {
@@ -176,15 +188,13 @@
       font-weight: 800;
     }
 
-    .answer-box {
+    .judge-box {
       display: grid;
-      grid-template-columns: 1fr 140px;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
       width: min(560px, 100%);
       margin: 0 auto;
     }
-
-    .answer-box input { font-size: 1.25rem; text-align: center; }
 
     .stats {
       display: grid;
@@ -225,20 +235,20 @@
 
     @media (max-width: 880px) {
       .grid { grid-template-columns: 1fr; }
-      .answer-box { grid-template-columns: 1fr; }
-      .history-item { grid-template-columns: 1fr; }
+      .judge-box, .history-item { grid-template-columns: 1fr; }
+      .display { min-height: 300px; }
     }
   </style>
 </head>
 <body>
   <main class="app">
     <header>
-      <div class="eyebrow">Flash Mental Arithmetic</div>
-      <h1>フラッシュ暗算</h1>
-      <p class="lead">表示される数字を頭の中で足し合わせ、最後に合計を入力します。桁数・出題数・表示速度・負の数の有無を調整して、毎日少しずつ計算力を鍛えましょう。</p>
+      <div class="eyebrow">Expression Mental Arithmetic</div>
+      <h1>式で暗算</h1>
+      <p class="lead">「12 + 34」のような式を見て暗算します。数秒後に答えが自動で表示されるので、自分の答えと比べて記録できます。</p>
     </header>
 
-    <section class="grid" aria-label="フラッシュ暗算アプリ">
+    <section class="grid" aria-label="式で練習する暗算アプリ">
       <aside class="card settings">
         <h2>トレーニング設定</h2>
         <div class="row">
@@ -250,17 +260,18 @@
               <option value="4">4桁</option>
             </select>
           </label>
-          <label>出題数
-            <input id="count" type="number" min="2" max="30" value="8" />
+          <label>項の数
+            <input id="count" type="number" min="2" max="12" value="2" />
           </label>
         </div>
         <div class="row">
-          <label>表示速度
-            <select id="speed">
-              <option value="1200">ゆっくり</option>
-              <option value="800" selected>ふつう</option>
-              <option value="500">速い</option>
-              <option value="300">超速</option>
+          <label>答えまでの時間
+            <select id="revealDelay">
+              <option value="2000">2秒</option>
+              <option value="3000" selected>3秒</option>
+              <option value="5000">5秒</option>
+              <option value="8000">8秒</option>
+              <option value="10000">10秒</option>
             </select>
           </label>
           <label>難易度
@@ -285,17 +296,17 @@
       <section class="card stage">
         <div style="width: 100%;">
           <div id="display" class="display" aria-live="polite">
-            <div id="flashNumber" class="number">Ready</div>
+            <div id="expression" class="expression">Ready</div>
           </div>
           <p id="status" class="status">設定を選んでスタートしてください。</p>
-          <form id="answerForm" class="answer-box">
-            <input id="answer" type="number" inputmode="numeric" placeholder="合計を入力" disabled />
-            <button id="submitButton" class="primary" disabled>答え合わせ</button>
-          </form>
+          <div class="judge-box" aria-label="結果を記録">
+            <button id="correctButton" class="success" disabled>できた</button>
+            <button id="wrongButton" class="danger" disabled>もう一回</button>
+          </div>
           <div class="stats" aria-label="成績">
             <div class="stat"><strong id="totalGames">0</strong><span>挑戦回数</span></div>
             <div class="stat"><strong id="bestStreak">0</strong><span>連続正解</span></div>
-            <div class="stat"><strong id="accuracy">0%</strong><span>正答率</span></div>
+            <div class="stat"><strong id="accuracy">0%</strong><span>成功率</span></div>
           </div>
         </div>
       </section>
@@ -313,17 +324,16 @@
     const elements = {
       digits: document.getElementById('digits'),
       count: document.getElementById('count'),
-      speed: document.getElementById('speed'),
+      revealDelay: document.getElementById('revealDelay'),
       mode: document.getElementById('mode'),
       countdown: document.getElementById('countdown'),
       startButton: document.getElementById('startButton'),
       resetButton: document.getElementById('resetButton'),
       display: document.getElementById('display'),
-      flashNumber: document.getElementById('flashNumber'),
+      expression: document.getElementById('expression'),
       status: document.getElementById('status'),
-      answerForm: document.getElementById('answerForm'),
-      answer: document.getElementById('answer'),
-      submitButton: document.getElementById('submitButton'),
+      correctButton: document.getElementById('correctButton'),
+      wrongButton: document.getElementById('wrongButton'),
       totalGames: document.getElementById('totalGames'),
       bestStreak: document.getElementById('bestStreak'),
       accuracy: document.getElementById('accuracy'),
@@ -333,7 +343,9 @@
     const state = {
       sequence: [],
       total: 0,
+      expression: '',
       isPlaying: false,
+      waitingForJudge: false,
       games: 0,
       correct: 0,
       streak: 0,
@@ -343,17 +355,30 @@
 
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    function randomNumber(digits, mode) {
+    function randomNumber(digits, mode, index) {
       const min = digits === 1 ? 1 : 10 ** (digits - 1);
       const max = (10 ** digits) - 1;
       const value = Math.floor(Math.random() * (max - min + 1)) + min;
-      return mode === 'mixed' && Math.random() < 0.35 ? -value : value;
+      if (index === 0 || mode === 'positive') return value;
+      return Math.random() < 0.35 ? -value : value;
+    }
+
+    function formatExpression(numbers) {
+      return numbers.map((number, index) => {
+        if (index === 0) return String(number);
+        return number < 0 ? `- ${Math.abs(number)}` : `+ ${number}`;
+      }).join(' ');
     }
 
     function setControls(disabled) {
-      [elements.digits, elements.count, elements.speed, elements.mode, elements.countdown, elements.startButton].forEach(el => {
+      [elements.digits, elements.count, elements.revealDelay, elements.mode, elements.countdown, elements.startButton].forEach(el => {
         el.disabled = disabled;
       });
+    }
+
+    function setJudgeButtons(enabled) {
+      elements.correctButton.disabled = !enabled;
+      elements.wrongButton.disabled = !enabled;
     }
 
     function renderStats() {
@@ -369,8 +394,8 @@
       }
       elements.history.innerHTML = state.history.map(item => `
         <li class="history-item">
-          <span class="badge ${item.ok ? 'correct' : 'wrong'}">${item.ok ? '正解' : '不正解'}</span>
-          <span>問題: ${item.sequence.join(' + ').replaceAll('+ -', '- ')} / 正答: ${item.total} / 回答: ${item.answer}</span>
+          <span class="badge ${item.ok ? 'correct' : 'wrong'}">${item.ok ? 'できた' : '練習中'}</span>
+          <span>式: ${item.expression} = ${item.total}</span>
           <span>${item.time}</span>
         </li>
       `).join('');
@@ -379,81 +404,74 @@
     async function startGame() {
       if (state.isPlaying) return;
       const digits = Number(elements.digits.value);
-      const count = Math.max(2, Math.min(30, Number(elements.count.value) || 8));
-      const speed = Number(elements.speed.value);
+      const count = Math.max(2, Math.min(12, Number(elements.count.value) || 2));
+      const revealDelay = Number(elements.revealDelay.value);
       const mode = elements.mode.value;
       const countdown = Number(elements.countdown.value);
 
       elements.count.value = count;
-      state.sequence = Array.from({ length: count }, () => randomNumber(digits, mode));
-      state.total = state.sequence.reduce((sum, n) => sum + n, 0);
+      state.sequence = Array.from({ length: count }, (_, index) => randomNumber(digits, mode, index));
+      state.total = state.sequence.reduce((sum, number) => sum + number, 0);
+      state.expression = formatExpression(state.sequence);
       state.isPlaying = true;
-      elements.answer.value = '';
-      elements.answer.disabled = true;
-      elements.submitButton.disabled = true;
+      state.waitingForJudge = false;
       setControls(true);
-      elements.display.classList.add('playing');
+      setJudgeButtons(false);
+      elements.display.classList.add('thinking');
 
       for (let i = countdown; i > 0; i--) {
-        elements.flashNumber.textContent = i;
-        elements.status.textContent = 'まもなく開始します…';
+        elements.expression.textContent = i;
+        elements.status.textContent = 'まもなく式を表示します。';
         await sleep(800);
       }
 
-      for (let i = 0; i < state.sequence.length; i++) {
-        elements.flashNumber.textContent = state.sequence[i];
-        elements.status.textContent = `${i + 1} / ${state.sequence.length}`;
-        await sleep(speed);
-        elements.flashNumber.textContent = '';
-        await sleep(Math.min(160, speed / 3));
-      }
+      elements.expression.textContent = state.expression;
+      elements.status.textContent = `${Math.round(revealDelay / 1000)}秒後に答えを表示します。`;
+      await sleep(revealDelay);
 
-      elements.display.classList.remove('playing');
-      elements.flashNumber.textContent = '?';
-      elements.status.textContent = '合計を入力してください。';
-      elements.answer.disabled = false;
-      elements.submitButton.disabled = false;
-      elements.answer.focus();
+      elements.display.classList.remove('thinking');
+      elements.expression.innerHTML = `${state.expression}<span class="answer">= ${state.total}</span>`;
+      elements.status.textContent = '自分の答えと比べて記録してください。';
       state.isPlaying = false;
+      state.waitingForJudge = true;
+      setControls(false);
+      setJudgeButtons(true);
     }
 
-    function submitAnswer(event) {
-      event.preventDefault();
-      if (elements.answer.disabled) return;
-      const answer = Number(elements.answer.value);
-      const ok = answer === state.total;
+    function recordResult(ok) {
+      if (!state.waitingForJudge) return;
       state.games += 1;
       state.correct += ok ? 1 : 0;
       state.streak = ok ? state.streak + 1 : 0;
       state.bestStreak = Math.max(state.bestStreak, state.streak);
       state.history.unshift({
         ok,
-        answer: elements.answer.value === '' ? '未入力' : answer,
         total: state.total,
-        sequence: state.sequence,
+        expression: state.expression,
         time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
       });
       state.history = state.history.slice(0, 8);
-
-      elements.flashNumber.textContent = ok ? '正解!' : state.total;
-      elements.status.textContent = ok ? 'すばらしい集中力です。' : `惜しい！正しい答えは ${state.total} でした。`;
-      elements.answer.disabled = true;
-      elements.submitButton.disabled = true;
-      setControls(false);
+      state.waitingForJudge = false;
+      setJudgeButtons(false);
+      elements.status.textContent = ok ? 'いい感じです。次の問題へ進めます。' : 'もう一度練習しましょう。次の問題へ進めます。';
       renderStats();
       renderHistory();
     }
 
     function resetHistory() {
-      Object.assign(state, { games: 0, correct: 0, streak: 0, bestStreak: 0, history: [] });
-      elements.flashNumber.textContent = 'Ready';
+      Object.assign(state, { games: 0, correct: 0, streak: 0, bestStreak: 0, history: [], waitingForJudge: false });
+      elements.expression.textContent = 'Ready';
       elements.status.textContent = '履歴をリセットしました。';
+      setControls(false);
+      setJudgeButtons(false);
+      elements.display.classList.remove('thinking');
       renderStats();
       renderHistory();
     }
 
     elements.startButton.addEventListener('click', startGame);
-    elements.answerForm.addEventListener('submit', submitAnswer);
+    elements.correctButton.addEventListener('click', () => recordResult(true));
+    elements.wrongButton.addEventListener('click', () => recordResult(false));
     elements.resetButton.addEventListener('click', resetHistory);
     renderStats();
   </script>
