@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ルーレット</title>
+    <style>
+        /* ルーレットとボタンのスタイル設定 */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #roulette {
+            margin: 50px auto;
+            width: 500px;
+            height: 500px;
+            position: relative;
+        }
+        #canvas {
+            border: 10px solid #ccc;
+            border-radius: 50%;
+        }
+        #pointer {
+            width: 0; 
+            height: 0; 
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-top: 60px solid red;
+            position: absolute;
+            top: -55px;
+            left: 220px;
+            z-index: 1;
+        }
+        #startButton, #stopButton, #editButton {
+            font-size: 20px;
+            padding: 10px 20px;
+            margin: 10px;
+        }
+        #editPage {
+            display: none;
+        }
+        #itemList {
+            list-style: none;
+            padding: 0;
+        }
+        #itemList li {
+            margin: 5px 0;
+        }
+        /* ポップアップのスタイル */
+        #resultPopup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        #resultPopupContent {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 50px;
+            border-radius: 10px;
+            font-size: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>ルーレット</h1>
+<div id="mainPage">
+    <div id="roulette">
+        <div id="pointer"></div>
+        <canvas id="canvas" width="500" height="500"></canvas>
+    </div>
+    <button id="startButton">スタート</button>
+    <button id="stopButton">ストップ</button>
+    <button id="editButton">編集</button>
+</div>
+
+<div id="editPage">
+    <h2>ルーレット編集</h2>
+    <ul id="itemList"></ul>
+    <input type="text" id="newItem" placeholder="項目名を入力">
+    <button id="addItemButton">追加</button>
+    <br><br>
+    <button id="saveButton">保存</button>
+    <button id="cancelButton">キャンセル</button>
+</div>
+
+<!-- 結果ポップアップ -->
+<div id="resultPopup">
+    <div id="resultPopupContent"></div>
+</div>
+
+<script>
+    // ルーレット機能のJavaScriptコード
+
+    // 初期化
+    let items = [];
+    let canvas = document.getElementById('canvas');
+    let ctx = canvas.getContext('2d');
+    let startAngle = 0;
+    let spinTimeout = null;
+    let spinAngle = 0;
+    let isSpinning = false;
+
+    // localStorageから保存された項目を読み込む
+    if (localStorage.getItem('rouletteItems')) {
+        items = JSON.parse(localStorage.getItem('rouletteItems'));
+    } else {
+        // デフォルトの項目
+        items = ["アイテム1", "アイテム2", "アイテム3", "アイテム4", "アイテム5", "アイテム6", "アイテム7", "アイテム8", "アイテム9", "アイテム10", "アイテム11", "アイテム12"];
+    }
+
+    drawRouletteWheel();
+
+    // イベントリスナーの設定
+    document.getElementById('startButton').addEventListener('click', startSpin);
+    document.getElementById('stopButton').addEventListener('click', stopSpin);
+    document.getElementById('editButton').addEventListener('click', showEditPage);
+    document.getElementById('saveButton').addEventListener('click', saveItems);
+    document.getElementById('cancelButton').addEventListener('click', hideEditPage);
+    document.getElementById('addItemButton').addEventListener('click', addItem);
+    document.getElementById('resultPopup').addEventListener('click', function() {
+        this.style.display = 'none';
+    });
+
+    function drawRouletteWheel() {
+        let outsideRadius = 240;
+        let textRadius = 200;
+        let insideRadius = 0;
+
+        ctx.clearRect(0, 0, 500, 500);
+
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
+
+        let totalItems = items.length;
+        let arc = 2 * Math.PI / totalItems;
+
+        for(let i = 0; i < totalItems; i++) {
+            let angle = startAngle + i * arc;
+            ctx.fillStyle = getColor(i, totalItems);
+
+            ctx.beginPath();
+            ctx.arc(250, 250, outsideRadius, angle, angle + arc, false);
+            ctx.lineTo(250, 250);
+            ctx.fill();
+
+            ctx.save();
+            ctx.fillStyle = "black";
+            ctx.translate(250 + Math.cos(angle + arc / 2) * textRadius, 250 + Math.sin(angle + arc / 2) * textRadius);
+            ctx.rotate(angle + arc / 2 + Math.PI / 2);
+            let text = items[i];
+            ctx.fillText(text, -ctx.measureText(text).width / 2, 0);
+            ctx.restore();
+        }
+    }
+
+    function getColor(item, maxItem) {
+        let colors = ["#FF5733", "#33FF57", "#3357FF", "#F3FF33", "#FF33F3", "#33FFF3"];
+        return colors[item % colors.length];
+    }
+
+    function spin() {
+        startAngle += spinAngle * Math.PI / 180;
+        drawRouletteWheel();
+        spinTimeout = requestAnimationFrame(spin);
+    }
+
+    function startSpin() {
+        if(isSpinning) return;
+        isSpinning = true;
+        spinAngle = Math.random() * 5 + 10; // 回転速度
+        spin();
+    }
+
+    function stopSpin() {
+        if(!isSpinning) return;
+        // 徐々に減速する
+        function slowDown() {
+            if (spinAngle > 0.2) {
+                spinAngle *= 0.97; // 減速率
+                requestAnimationFrame(slowDown);
+            } else {
+                cancelAnimationFrame(spinTimeout);
+                isSpinning = false;
+                displayResult();
+            }
+        }
+        slowDown();
+    }
+
+    function displayResult() {
+        // 結果を計算してポップアップで表示
+        let degrees = startAngle * 180 / Math.PI + 90;
+        let arcd = 360 / items.length;
+        let index = Math.floor((360 - degrees % 360) / arcd) % items.length;
+        let text = items[index];
+        document.getElementById('resultPopupContent').innerText = "結果: " + text;
+        document.getElementById('resultPopup').style.display = 'block';
+    }
+
+    function showEditPage() {
+        document.getElementById('mainPage').style.display = 'none';
+        document.getElementById('editPage').style.display = 'block';
+        updateItemList();
+    }
+
+    function hideEditPage() {
+        document.getElementById('editPage').style.display = 'none';
+        document.getElementById('mainPage').style.display = 'block';
+        drawRouletteWheel();
+    }
+
+    function updateItemList() {
+        let itemList = document.getElementById('itemList');
+        itemList.innerHTML = '';
+        for(let i = 0; i < items.length; i++) {
+            let li = document.createElement('li');
+            let input = document.createElement('input');
+            input.type = 'text';
+            input.value = items[i];
+            input.dataset.index = i;
+            input.addEventListener('change', function() {
+                items[this.dataset.index] = this.value;
+            });
+            let deleteButton = document.createElement('button');
+            deleteButton.textContent = '削除';
+            deleteButton.dataset.index = i;
+            deleteButton.addEventListener('click', function() {
+                items.splice(this.dataset.index, 1);
+                updateItemList();
+            });
+            li.appendChild(input);
+            li.appendChild(deleteButton);
+            itemList.appendChild(li);
+        }
+    }
+
+    function addItem() {
+        let newItem = document.getElementById('newItem').value.trim();
+        if(newItem) {
+            items.push(newItem);
+            document.getElementById('newItem').value = '';
+            updateItemList();
+        }
+    }
+
+    function saveItems() {
+        localStorage.setItem('rouletteItems', JSON.stringify(items));
+        hideEditPage();
+    }
+</script>
+
+</body>
+</html>
