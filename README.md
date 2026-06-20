@@ -2,6 +2,12 @@
 
 ブラウザだけで遊べる日本語のフラッシュ暗算アプリです。表示される数字を頭の中で足し合わせ、最後に合計を入力して答え合わせできます。
 
+## 公開URL
+
+GitHub Pages で公開する場合のURL:
+
+<https://ryo-ta8.github.io/-/>
+
 ## 機能
 
 - 桁数（1〜4桁）、出題数、表示速度を調整
@@ -20,6 +26,6 @@ python3 -m http.server 8000
 
 ## デプロイ
 
-このリポジトリは静的サイトとしてそのまま配信できます。Netlify / Vercel / GitHub Pages などでは、公開ディレクトリをリポジトリルートに設定してください。
+このリポジトリは静的サイトとしてそのまま配信できます。GitHub Pages では `.github/workflows/pages.yml` により、`main` ブランチへの push 時にリポジトリルートを公開します。
 
 Netlify では `netlify.toml` により公開ディレクトリが自動設定されます。
