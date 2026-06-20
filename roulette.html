@@ -8,19 +8,14 @@
         :root {
             --bg-1: #101827;
             --bg-2: #18233d;
-            --panel: rgba(255, 255, 255, 0.13);
-            --panel-strong: rgba(255, 255, 255, 0.2);
             --text: #ffffff;
             --muted: rgba(255, 255, 255, 0.72);
             --accent: #ffd166;
             --accent-2: #5eead4;
-            --danger: #ff6b6b;
             --shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         html,
         body {
@@ -52,15 +47,14 @@
         }
 
         button,
-        input {
-            font: inherit;
-        }
+        input { font: inherit; }
 
         button {
             border: none;
             cursor: pointer;
             color: var(--text);
             touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .app-shell {
@@ -79,9 +73,7 @@
             max-width: 1360px;
         }
 
-        .title-block {
-            text-align: left;
-        }
+        .title-block { text-align: left; }
 
         h1,
         h2 {
@@ -95,9 +87,7 @@
             text-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
         }
 
-        h2 {
-            font-size: clamp(1.9rem, 4vw, 3.8rem);
-        }
+        h2 { font-size: clamp(1.9rem, 4vw, 3.8rem); }
 
         .subtitle {
             margin: 10px 0 0;
@@ -238,9 +228,7 @@
             pointer-events: none;
         }
 
-        .control-card {
-            padding: clamp(18px, 2.4vw, 28px);
-        }
+        .control-card { padding: clamp(18px, 2.4vw, 28px); }
 
         .result-preview {
             min-height: 132px;
@@ -302,13 +290,8 @@
             filter: brightness(0.95);
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #22c55e, #14b8a6);
-        }
-
-        .btn-stop {
-            background: linear-gradient(135deg, #ff6b6b, #f97316);
-        }
+        .btn-primary { background: linear-gradient(135deg, #22c55e, #14b8a6); }
+        .btn-stop { background: linear-gradient(135deg, #ff6b6b, #f97316); }
 
         .btn-secondary {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.12));
@@ -429,7 +412,7 @@
             display: none;
             position: fixed;
             inset: 0;
-            z-index: 10;
+            z-index: 50;
             place-items: center;
             padding: 24px;
             background: rgba(3, 7, 18, 0.78);
@@ -481,14 +464,67 @@
         }
 
         @keyframes popIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9) translateY(16px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
+            from { opacity: 0; transform: scale(0.9) translateY(16px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        body.app-fullscreen {
+            overflow: hidden;
+        }
+
+        body.app-fullscreen .app-shell {
+            position: fixed;
+            inset: 0;
+            z-index: 30;
+            min-height: 100dvh;
+            height: 100dvh;
+            padding: clamp(10px, 1.5vw, 20px);
+            background:
+                radial-gradient(circle at 18% 10%, rgba(94, 234, 212, 0.26), transparent 34%),
+                radial-gradient(circle at 84% 18%, rgba(255, 209, 102, 0.24), transparent 34%),
+                linear-gradient(135deg, var(--bg-1), var(--bg-2));
+            overflow: hidden;
+        }
+
+        body.app-fullscreen .hero {
+            display: none;
+        }
+
+        body.app-fullscreen #mainPage {
+            max-width: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        body.app-fullscreen .main-grid {
+            width: 100%;
+            height: 100%;
+            grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+            gap: clamp(10px, 1.4vw, 18px);
+            align-items: stretch;
+        }
+
+        body.app-fullscreen .roulette-card {
+            min-height: 0;
+            height: 100%;
+            padding: clamp(10px, 1.6vw, 22px);
+        }
+
+        body.app-fullscreen #roulette {
+            width: min(94dvh, calc(100vw - 370px));
+            height: min(94dvh, calc(100vw - 370px));
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        body.app-fullscreen .control-card {
+            display: grid;
+            align-content: center;
+            padding: clamp(12px, 1.6vw, 20px);
+        }
+
+        body.app-fullscreen .hint {
+            display: none;
         }
 
         @media (max-width: 940px) {
@@ -497,13 +533,8 @@
                 flex-direction: column;
             }
 
-            .main-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .roulette-card {
-                min-height: auto;
-            }
+            .main-grid { grid-template-columns: 1fr; }
+            .roulette-card { min-height: auto; }
 
             #roulette {
                 width: min(86svh, 92vw, 720px);
@@ -517,42 +548,50 @@
                 align-items: stretch;
             }
 
-            .result-preview {
-                margin-bottom: 0;
+            .result-preview { margin-bottom: 0; }
+
+            body.app-fullscreen .main-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: minmax(0, 1fr) auto;
+            }
+
+            body.app-fullscreen #roulette {
+                width: min(74dvh, 96vw);
+                height: min(74dvh, 96vw);
+            }
+
+            body.app-fullscreen .control-card {
+                grid-template-columns: minmax(180px, 0.8fr) minmax(260px, 1.2fr);
+                padding: 10px;
+            }
+
+            body.app-fullscreen .btn {
+                min-height: 54px;
+                font-size: 1.05rem;
+                border-radius: 18px;
             }
         }
 
         @media (max-width: 680px) {
-            .app-shell {
-                padding: 12px;
-            }
-
-            .control-card {
-                grid-template-columns: 1fr;
-            }
-
+            .app-shell { padding: 12px; }
+            .control-card { grid-template-columns: 1fr; }
             .primary-actions,
-            .edit-tools {
-                grid-template-columns: 1fr;
-            }
-
-            .edit-header {
-                flex-direction: column;
-            }
-
+            .edit-tools { grid-template-columns: 1fr; }
+            .edit-header { flex-direction: column; }
             #itemList {
                 grid-template-columns: 1fr;
                 max-height: 50svh;
             }
-        }
 
-        @media (display-mode: fullscreen), (min-width: 1200px) and (min-height: 760px) {
-            .app-shell {
-                padding: clamp(18px, 2.2vw, 34px);
+            body.app-fullscreen .control-card {
+                grid-template-columns: 1fr;
             }
 
-            .roulette-card {
-                min-height: calc(100svh - 170px);
+            body.app-fullscreen #roulette {
+                width: min(63dvh, 94vw);
+                height: min(63dvh, 94vw);
+                min-width: 260px;
+                min-height: 260px;
             }
         }
     </style>
@@ -627,21 +666,24 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const roulette = document.getElementById('roulette');
+        const fullscreenButton = document.getElementById('fullscreenButton');
         let startAngle = 0;
         let spinTimeout = null;
+        let slowDownTimeout = null;
         let spinAngle = 0;
         let isSpinning = false;
+        let isStopping = false;
         let canvasSize = 900;
+        let appFullscreen = false;
 
-        if (localStorage.getItem('rouletteItems')) {
-            try {
-                items = JSON.parse(localStorage.getItem('rouletteItems')) || [];
-            } catch (error) {
-                items = [];
-            }
+        try {
+            const savedItems = localStorage.getItem('rouletteItems');
+            if (savedItems) items = JSON.parse(savedItems) || [];
+        } catch (error) {
+            items = [];
         }
 
-        if (!items.length) {
+        if (!Array.isArray(items) || items.length < 2) {
             items = ["アイテム1", "アイテム2", "アイテム3", "アイテム4", "アイテム5", "アイテム6", "アイテム7", "アイテム8", "アイテム9", "アイテム10", "アイテム11", "アイテム12"];
         }
 
@@ -651,26 +693,40 @@
         document.getElementById('saveButton').addEventListener('click', saveItems);
         document.getElementById('cancelButton').addEventListener('click', hideEditPage);
         document.getElementById('addItemButton').addEventListener('click', addItem);
-        document.getElementById('fullscreenButton').addEventListener('click', toggleFullscreen);
+        fullscreenButton.addEventListener('click', toggleFullscreen);
         document.getElementById('newItem').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') addItem();
         });
         document.getElementById('resultPopup').addEventListener('click', function() {
             this.style.display = 'none';
         });
-        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('resize', scheduleResize);
+        window.addEventListener('orientationchange', scheduleResize);
         document.addEventListener('fullscreenchange', function() {
-            document.getElementById('fullscreenButton').textContent = document.fullscreenElement ? '全画面を終了' : '全画面表示';
-            resizeCanvas();
+            const nativeFullscreen = Boolean(document.fullscreenElement);
+            setAppFullscreen(nativeFullscreen || appFullscreen, nativeFullscreen ? 'native' : 'sync');
+        });
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && appFullscreen && !document.fullscreenElement) {
+                setAppFullscreen(false);
+            }
         });
 
-        resizeCanvas();
+        scheduleResize();
         updateCountLabels();
+
+        function scheduleResize() {
+            requestAnimationFrame(function() {
+                resizeCanvas();
+                setTimeout(resizeCanvas, 120);
+            });
+        }
 
         function resizeCanvas() {
             const rect = roulette.getBoundingClientRect();
             const deviceRatio = window.devicePixelRatio || 1;
-            canvasSize = Math.max(360, Math.round(rect.width * deviceRatio));
+            const displaySize = Math.max(260, Math.floor(Math.min(rect.width || 600, rect.height || rect.width || 600)));
+            canvasSize = Math.max(360, Math.round(displaySize * deviceRatio));
             canvas.width = canvasSize;
             canvas.height = canvasSize;
             drawRouletteWheel();
@@ -685,7 +741,6 @@
             const arc = 2 * Math.PI / totalItems;
 
             ctx.clearRect(0, 0, canvasSize, canvasSize);
-
             ctx.save();
             ctx.beginPath();
             ctx.arc(center, center, outsideRadius + canvasSize * 0.025, 0, Math.PI * 2);
@@ -709,7 +764,6 @@
                 ctx.lineWidth = Math.max(3, canvasSize * 0.006);
                 ctx.strokeStyle = 'rgba(255,255,255,0.85)';
                 ctx.stroke();
-
                 drawText(items[i], angle, arc, textRadius, center, totalItems);
             }
 
@@ -739,7 +793,6 @@
             ctx.lineWidth = Math.max(4, fontSize * 0.18);
             ctx.strokeStyle = 'rgba(255,255,255,0.88)';
             ctx.fillStyle = '#111827';
-
             const maxWidth = Math.max(80, canvasSize * (totalItems > 10 ? 0.2 : 0.28));
             const displayText = fitText(cleanText, maxWidth);
             ctx.strokeText(displayText, 0, 0);
@@ -757,20 +810,12 @@
         }
 
         function getColor(index) {
-            const colors = [
-                '#ff6b6b', '#ffd166', '#06d6a0', '#4cc9f0', '#b5179e', '#f72585',
-                '#90be6d', '#f8961e', '#43aa8b', '#577590', '#9b5de5', '#00bbf9'
-            ];
+            const colors = ['#ff6b6b', '#ffd166', '#06d6a0', '#4cc9f0', '#b5179e', '#f72585', '#90be6d', '#f8961e', '#43aa8b', '#577590', '#9b5de5', '#00bbf9'];
             return colors[index % colors.length];
         }
 
-        function lightenColor(hex, amount) {
-            return adjustColor(hex, amount);
-        }
-
-        function darkenColor(hex, amount) {
-            return adjustColor(hex, -amount);
-        }
+        function lightenColor(hex, amount) { return adjustColor(hex, amount); }
+        function darkenColor(hex, amount) { return adjustColor(hex, -amount); }
 
         function adjustColor(hex, amount) {
             const color = hex.replace('#', '');
@@ -791,22 +836,28 @@
         }
 
         function startSpin() {
-            if (isSpinning || items.length === 0) return;
+            if (isSpinning || items.length < 2) return;
+            cancelAnimationFrame(spinTimeout);
+            cancelAnimationFrame(slowDownTimeout);
             isSpinning = true;
+            isStopping = false;
             document.getElementById('currentResult').textContent = '回転中...';
             spinAngle = Math.random() * 5 + 12;
             spin();
         }
 
         function stopSpin() {
-            if (!isSpinning) return;
+            if (!isSpinning || isStopping) return;
+            isStopping = true;
             function slowDown() {
                 if (spinAngle > 0.18) {
                     spinAngle *= 0.965;
-                    requestAnimationFrame(slowDown);
+                    slowDownTimeout = requestAnimationFrame(slowDown);
                 } else {
                     cancelAnimationFrame(spinTimeout);
+                    cancelAnimationFrame(slowDownTimeout);
                     isSpinning = false;
+                    isStopping = false;
                     displayResult();
                 }
             }
@@ -814,6 +865,7 @@
         }
 
         function displayResult() {
+            if (items.length < 2) return;
             const degrees = startAngle * 180 / Math.PI + 90;
             const arcd = 360 / items.length;
             const index = Math.floor((360 - degrees % 360) / arcd) % items.length;
@@ -828,7 +880,13 @@
         }
 
         function showEditPage() {
-            if (isSpinning) stopSpin();
+            if (isSpinning) {
+                cancelAnimationFrame(spinTimeout);
+                cancelAnimationFrame(slowDownTimeout);
+                isSpinning = false;
+                isStopping = false;
+            }
+            setAppFullscreen(false);
             document.getElementById('mainPage').style.display = 'none';
             document.getElementById('editPage').style.display = 'block';
             updateItemList();
@@ -838,7 +896,7 @@
             document.getElementById('editPage').style.display = 'none';
             document.getElementById('mainPage').style.display = 'block';
             updateCountLabels();
-            requestAnimationFrame(resizeCanvas);
+            scheduleResize();
         }
 
         function updateItemList() {
@@ -846,7 +904,6 @@
             itemList.innerHTML = '';
             items.forEach(function(item, index) {
                 const li = document.createElement('li');
-
                 const number = document.createElement('span');
                 number.className = 'item-number';
                 number.textContent = index + 1;
@@ -856,7 +913,7 @@
                 input.value = item;
                 input.dataset.index = index;
                 input.addEventListener('input', function() {
-                    items[this.dataset.index] = this.value;
+                    items[Number(this.dataset.index)] = this.value;
                     updateCountLabels();
                 });
 
@@ -869,7 +926,7 @@
                         alert('項目は2つ以上必要です。');
                         return;
                     }
-                    items.splice(this.dataset.index, 1);
+                    items.splice(Number(this.dataset.index), 1);
                     updateItemList();
                 });
 
@@ -884,21 +941,26 @@
         function addItem() {
             const input = document.getElementById('newItem');
             const newItem = input.value.trim();
-            if (newItem) {
-                items.push(newItem);
-                input.value = '';
-                updateItemList();
-                input.focus();
-            }
+            if (!newItem) return;
+            items.push(newItem);
+            input.value = '';
+            updateItemList();
+            input.focus();
         }
 
         function saveItems() {
             items = items.map(item => String(item).trim()).filter(Boolean);
             if (items.length < 2) {
                 alert('項目は2つ以上入力してください。');
+                updateItemList();
                 return;
             }
-            localStorage.setItem('rouletteItems', JSON.stringify(items));
+            try {
+                localStorage.setItem('rouletteItems', JSON.stringify(items));
+            } catch (error) {
+                alert('保存できませんでした。ブラウザの容量や設定を確認してください。');
+                return;
+            }
             hideEditPage();
         }
 
@@ -908,12 +970,42 @@
             document.getElementById('editItemCountLabel').textContent = label;
         }
 
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen?.();
-            } else {
-                document.exitFullscreen?.();
+        async function toggleFullscreen() {
+            const isNativeFullscreen = Boolean(document.fullscreenElement);
+            if (isNativeFullscreen) {
+                try {
+                    if (document.exitFullscreen) await document.exitFullscreen();
+                } catch (error) {
+                    setAppFullscreen(false);
+                }
+                setAppFullscreen(false);
+                return;
             }
+
+            if (appFullscreen) {
+                setAppFullscreen(false);
+                return;
+            }
+
+            if (document.documentElement.requestFullscreen) {
+                try {
+                    await document.documentElement.requestFullscreen();
+                    setAppFullscreen(true, 'native');
+                    return;
+                } catch (error) {
+                    setAppFullscreen(true, 'fallback');
+                    return;
+                }
+            }
+
+            setAppFullscreen(true, 'fallback');
+        }
+
+        function setAppFullscreen(enabled) {
+            appFullscreen = Boolean(enabled);
+            document.body.classList.toggle('app-fullscreen', appFullscreen);
+            fullscreenButton.textContent = appFullscreen ? '全画面を終了' : '全画面表示';
+            scheduleResize();
         }
 
         function escapeHtml(value) {
