@@ -240,9 +240,9 @@
 
     .settings-grid {
       display: grid;
-      grid-template-columns: minmax(220px, 1fr) minmax(260px, 2fr) auto;
-      gap: 12px;
-      align-items: end;
+      grid-template-columns: minmax(220px, 1fr) minmax(320px, 2fr);
+      gap: 16px;
+      align-items: start;
     }
 
     label {
@@ -270,7 +270,44 @@
       box-shadow: 0 0 0 4px rgba(249, 115, 22, .16);
     }
 
-    .small-btn {
+    .task-editor {
+      display: grid;
+      gap: 10px;
+    }
+
+    .task-editor-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+
+    .task-editor-head label { margin-bottom: 0; }
+
+    .task-editor-help {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .task-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border: 2px solid rgba(254, 215, 170, .72);
+      border-radius: 18px;
+      background: #fffaf5;
+    }
+
+    .task-row input { min-height: 48px; }
+
+    .small-btn,
+    .icon-btn {
       min-height: 52px;
       border: 0;
       border-radius: 14px;
@@ -278,6 +315,24 @@
       color: #fff;
       background: var(--blue);
       font-weight: 950;
+    }
+
+    .icon-btn {
+      min-width: 52px;
+      padding: 0 14px;
+      background: var(--red);
+      font-size: 20px;
+    }
+
+    .add-btn {
+      background: var(--green);
+      white-space: nowrap;
+    }
+
+    .apply-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
     }
 
     .message {
@@ -311,6 +366,10 @@
       .logo { width: 54px; height: 54px; font-size: 28px; }
       .controls { grid-template-columns: 1fr; }
       .task-list { grid-template-columns: 1fr; min-height: 220px; }
+      .task-editor-head { align-items: stretch; flex-direction: column; }
+      .apply-row { display: block; }
+      .apply-row .small-btn,
+      .add-btn { width: 100%; }
     }
   </style>
 </head>
@@ -361,11 +420,17 @@
           <label for="minuteInput">急かす音の間隔（分）</label>
           <input id="minuteInput" type="number" min="1" max="10" value="1" />
         </div>
-        <div>
-          <label for="taskInput">係の名前（読点・カンマ区切り）</label>
-          <input id="taskInput" type="text" value="配膳台, 食器, ごはん, おかず, 牛乳, ストロー, いただきます係" />
+        <div class="task-editor">
+          <div class="task-editor-head">
+            <label id="taskListLabel">係の名前</label>
+            <button id="addTaskBtn" class="small-btn add-btn" type="button">＋ 係を追加</button>
+          </div>
+          <p class="task-editor-help">1つの枠に1つの係を書きます。変更したい枠を直接直して、いらない係は削除できます。</p>
+          <div id="taskEditor" aria-labelledby="taskListLabel"></div>
+          <div class="apply-row">
+            <button id="applyBtn" class="small-btn" type="button">係を更新</button>
+          </div>
         </div>
-        <button id="applyBtn" class="small-btn" type="button">係を更新</button>
       </div>
       <div id="message" class="message" role="status" aria-live="polite"></div>
     </section>
@@ -383,7 +448,8 @@
     const resetBtn = document.getElementById("resetBtn");
     const soundBtn = document.getElementById("soundBtn");
     const applyBtn = document.getElementById("applyBtn");
-    const taskInput = document.getElementById("taskInput");
+    const addTaskBtn = document.getElementById("addTaskBtn");
+    const taskEditor = document.getElementById("taskEditor");
     const minuteInput = document.getElementById("minuteInput");
     const message = document.getElementById("message");
 
@@ -395,11 +461,52 @@
     let nextChimeAt = 60;
     let audioContext = null;
 
-    function parseTasks(value) {
-      return value
-        .split(/[、,]/)
-        .map((task) => task.trim())
+    const defaultTasks = ["配膳台", "食器", "ごはん", "おかず", "牛乳", "ストロー", "いただきます係"];
+
+    function getEditorTasks() {
+      return [...taskEditor.querySelectorAll("input")]
+        .map((input) => input.value.trim())
         .filter(Boolean);
+    }
+
+    function createTaskRow(value = "") {
+      const row = document.createElement("div");
+      row.className = "task-row";
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = value;
+      input.placeholder = "係の名前";
+      input.setAttribute("aria-label", "係の名前");
+
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "icon-btn";
+      deleteButton.textContent = "×";
+      deleteButton.setAttribute("aria-label", `${value || "この係"}を削除`);
+      deleteButton.addEventListener("click", () => {
+        row.remove();
+        message.textContent = "係を削除しました。最後に「係を更新」を押してください。";
+        if (!taskEditor.children.length) addTaskRow();
+      });
+
+      input.addEventListener("input", () => {
+        deleteButton.setAttribute("aria-label", `${input.value.trim() || "この係"}を削除`);
+      });
+
+      row.append(input, deleteButton);
+      return row;
+    }
+
+    function addTaskRow(value = "") {
+      const row = createTaskRow(value);
+      taskEditor.appendChild(row);
+      row.querySelector("input").focus();
+    }
+
+    function renderTaskEditor(taskNames) {
+      taskEditor.innerHTML = "";
+      taskNames.forEach((task) => taskEditor.appendChild(createTaskRow(task)));
     }
 
     function formatTime(totalSeconds) {
@@ -511,7 +618,7 @@
     }
 
     function applyTasks() {
-      const nextTasks = parseTasks(taskInput.value);
+      const nextTasks = getEditorTasks();
       if (!nextTasks.length) {
         message.textContent = "係の名前を1つ以上入力してください。";
         return;
@@ -519,7 +626,7 @@
       const uniqueTasks = [...new Set(nextTasks)];
       tasks = uniqueTasks;
       done = new Set([...done].filter((task) => uniqueTasks.includes(task)));
-      taskInput.value = uniqueTasks.join(", ");
+      renderTaskEditor(uniqueTasks);
       message.textContent = "係を更新しました。";
       render();
     }
@@ -532,12 +639,17 @@
       message.textContent = "この音が1分ごとに流れます。";
     });
     applyBtn.addEventListener("click", applyTasks);
+    addTaskBtn.addEventListener("click", () => {
+      addTaskRow();
+      message.textContent = "新しい係を追加しました。名前を書いて「係を更新」を押してください。";
+    });
     minuteInput.addEventListener("change", () => {
       nextChimeAt = Math.max(getElapsedSeconds() + getIntervalSeconds(), getIntervalSeconds());
       message.textContent = "音の間隔を更新しました。";
     });
 
-    tasks = parseTasks(taskInput.value);
+    tasks = [...defaultTasks];
+    renderTaskEditor(tasks);
     resetAll();
   </script>
 </body>
