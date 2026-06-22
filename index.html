@@ -3,1018 +3,542 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ランダムグループ分け</title>
+  <title>給食当番 準備タイマー</title>
   <style>
     :root {
-      --bg: #f4f7fb;
+      --bg: #fff7ed;
       --surface: #ffffff;
-      --surface-soft: #f8fafc;
-      --ink: #172033;
-      --muted: #667085;
-      --line: #d9e2ef;
+      --ink: #1f2937;
+      --muted: #64748b;
+      --line: #fed7aa;
+      --orange: #f97316;
+      --orange-dark: #c2410c;
+      --green: #16a34a;
+      --green-soft: #dcfce7;
       --blue: #2563eb;
-      --blue-dark: #1d4ed8;
-      --mint: #10b981;
-      --amber: #f59e0b;
       --red: #e11d48;
-      --shadow: 0 18px 45px rgba(15, 23, 42, .12);
-      --radius: 18px;
+      --shadow: 0 18px 45px rgba(124, 45, 18, .14);
+      --radius: 22px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
-    [hidden] {
-      display: none !important;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       min-height: 100vh;
       color: var(--ink);
       background:
-        linear-gradient(135deg, rgba(37, 99, 235, .11), transparent 34%),
-        linear-gradient(315deg, rgba(16, 185, 129, .12), transparent 30%),
+        radial-gradient(circle at top left, rgba(251, 146, 60, .34), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(34, 197, 94, .22), transparent 30%),
         var(--bg);
       font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
     }
 
-    button,
-    input,
-    select {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
 
     .app {
       width: min(1180px, calc(100% - 28px));
       margin: 0 auto;
-      padding: 18px 0 28px;
+      padding: 22px 0 32px;
     }
 
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 14px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .logo {
-      width: 54px;
-      height: 54px;
+    .hero {
       display: grid;
-      place-items: center;
-      flex: 0 0 auto;
-      border-radius: 16px;
-      color: #fff;
-      background: linear-gradient(135deg, var(--blue), var(--mint));
-      box-shadow: 0 12px 28px rgba(37, 99, 235, .26);
-    }
-
-    .logo svg {
-      width: 30px;
-      height: 30px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(25px, 4vw, 40px);
-      line-height: 1.08;
-      letter-spacing: 0;
-    }
-
-    .subtitle {
-      margin: 5px 0 0;
-      color: var(--muted);
-      font-weight: 700;
-      line-height: 1.45;
-    }
-
-    .summary {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      flex: 0 0 auto;
-      min-height: 42px;
-      padding: 9px 13px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, .78);
-      color: #334155;
-      font-weight: 800;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, .08);
-    }
-
-    .summary svg {
-      width: 18px;
-      height: 18px;
-      color: var(--blue);
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 360px minmax(0, 1fr);
+      grid-template-columns: 1fr auto;
       gap: 16px;
-      align-items: start;
+      align-items: center;
+      margin-bottom: 16px;
     }
 
+    .title-card,
+    .timer-card,
     .panel {
-      background: rgba(255, 255, 255, .92);
-      border: 1px solid rgba(217, 226, 239, .88);
+      background: rgba(255, 255, 255, .94);
+      border: 2px solid rgba(254, 215, 170, .88);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
     }
 
-    .controls {
-      padding: 16px;
-    }
-
-    .results {
-      min-height: calc(100vh - 118px);
-      overflow: hidden;
-    }
-
-    .section {
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px solid var(--line);
-    }
-
-    .section:first-child {
-      margin-top: 0;
-      padding-top: 0;
-      border-top: 0;
-    }
-
-    .section-title {
+    .title-card {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin: 0 0 11px;
-      font-size: 15px;
+      gap: 14px;
+      padding: 18px;
+    }
+
+    .logo {
+      width: 66px;
+      height: 66px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 20px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--orange), #facc15);
+      box-shadow: 0 12px 28px rgba(249, 115, 22, .25);
+      font-size: 34px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(27px, 4vw, 44px);
+      line-height: 1.05;
+    }
+
+    .lead {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: clamp(14px, 2vw, 18px);
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .timer-card {
+      min-width: min(100%, 330px);
+      padding: 16px 18px;
+      text-align: center;
+    }
+
+    .timer-label {
+      color: var(--muted);
+      font-weight: 900;
+      letter-spacing: .08em;
+    }
+
+    .timer {
+      margin-top: 4px;
+      color: var(--orange-dark);
+      font-size: clamp(48px, 8vw, 76px);
+      font-variant-numeric: tabular-nums;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .status {
+      margin-top: 8px;
+      min-height: 28px;
       color: #334155;
       font-weight: 900;
     }
 
-    .section-title svg {
-      width: 18px;
-      height: 18px;
-      color: var(--blue);
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
     }
 
-    .range-grid {
+    .control-btn {
+      min-height: 56px;
+      border: 0;
+      border-radius: 16px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+      box-shadow: 0 12px 24px rgba(249, 115, 22, .20);
+      font-weight: 950;
+      transition: transform .14s ease, box-shadow .14s ease;
+    }
+
+    .control-btn.secondary {
+      color: #7c2d12;
+      background: #fff7ed;
+      border: 2px solid var(--line);
+      box-shadow: none;
+    }
+
+    .control-btn.good {
+      background: linear-gradient(135deg, #22c55e, #15803d);
+    }
+
+    .control-btn:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+      transform: none;
+    }
+
+    .control-btn:not(:disabled):hover,
+    .task-btn:hover,
+    .small-btn:hover { transform: translateY(-2px); }
+
+    .board {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel { overflow: hidden; }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 15px 17px;
+      border-bottom: 2px solid var(--line);
+      background: rgba(255, 247, 237, .76);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: clamp(20px, 3vw, 30px);
+      line-height: 1.2;
+    }
+
+    .counter {
+      min-width: 72px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      text-align: center;
+      color: #fff;
+      background: var(--orange);
+      font-size: 20px;
+      font-weight: 950;
+    }
+
+    .done .counter { background: var(--green); }
+
+    .task-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      min-height: 330px;
+      padding: 16px;
+    }
+
+    .task-btn {
+      min-height: 92px;
+      border: 3px solid #fdba74;
+      border-radius: 20px;
+      background: #fff;
+      color: #7c2d12;
+      box-shadow: 0 10px 22px rgba(124, 45, 18, .10);
+      font-size: clamp(18px, 2.4vw, 26px);
+      font-weight: 950;
+      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+
+    .task-btn.done-task {
+      border-color: #86efac;
+      color: #14532d;
+      background: var(--green-soft);
+    }
+
+    .task-btn small {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .settings {
+      margin-top: 16px;
+      padding: 16px;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(260px, 2fr) auto;
+      gap: 12px;
+      align-items: end;
     }
 
     label {
       display: block;
-      margin-bottom: 6px;
-      color: #475467;
-      font-size: 13px;
-      font-weight: 800;
+      margin-bottom: 7px;
+      color: #7c2d12;
+      font-weight: 950;
     }
 
-    .number-input,
-    .select-box {
+    input {
       width: 100%;
-      min-height: 58px;
+      min-height: 52px;
+      padding: 10px 12px;
       border: 2px solid var(--line);
       border-radius: 14px;
       background: #fff;
-      color: #102a56;
-      outline: none;
-      font-weight: 900;
-      transition: border-color .15s ease, box-shadow .15s ease;
-    }
-
-    .number-input {
-      padding: 9px 10px;
-      text-align: center;
-      font-size: 29px;
-    }
-
-    .number-input:focus,
-    .select-box:focus,
-    .number-input.active {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, .13);
-    }
-
-    .select-box {
-      appearance: none;
-      padding: 0 40px 0 14px;
-      font-size: 20px;
-      background-image:
-        linear-gradient(45deg, transparent 50%, #475467 50%),
-        linear-gradient(135deg, #475467 50%, transparent 50%);
-      background-position:
-        calc(100% - 21px) 25px,
-        calc(100% - 15px) 25px;
-      background-size: 6px 6px;
-      background-repeat: no-repeat;
-    }
-
-    .hint {
-      margin: 9px 0 0;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-      line-height: 1.55;
-    }
-
-    .quick-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .quick-btn,
-    .key,
-    .sub-btn,
-    .icon-btn {
-      border: 1px solid var(--line);
-      background: var(--surface-soft);
-      color: #334155;
-      font-weight: 900;
-      transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
-    }
-
-    .quick-btn {
-      min-height: 38px;
-      border-radius: 12px;
-      font-size: 13px;
-    }
-
-    .numpad {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 11px;
-    }
-
-    .key {
-      height: 50px;
-      border-radius: 14px;
-      font-size: 21px;
-      color: #182230;
-      background: #fff;
-    }
-
-    .key.utility {
-      color: #0f4a6d;
-      background: #eaf7ff;
-    }
-
-    .main-btn {
-      width: 100%;
-      min-height: 58px;
-      border: 0;
-      border-radius: 15px;
-      color: #fff;
-      background: linear-gradient(135deg, var(--blue), var(--blue-dark));
-      box-shadow: 0 16px 30px rgba(37, 99, 235, .24);
+      color: var(--ink);
       font-size: 18px;
-      font-weight: 950;
+      font-weight: 850;
+      outline: none;
     }
 
-    .button-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 9px;
+    input:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 4px rgba(249, 115, 22, .16);
     }
 
-    .sub-btn {
-      min-height: 44px;
-      border-radius: 13px;
-    }
-
-    .quick-btn:hover,
-    .key:hover,
-    .sub-btn:hover,
-    .icon-btn:hover,
-    .main-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 20px rgba(15, 23, 42, .10);
-    }
-
-    .main-btn:active,
-    .sub-btn:active,
-    .quick-btn:active,
-    .key:active,
-    .icon-btn:active {
-      transform: translateY(1px);
-    }
-
-    .notice {
-      display: none;
-      margin-top: 10px;
-      padding: 10px 12px;
-      border-radius: 13px;
-      font-size: 13px;
-      font-weight: 800;
-      line-height: 1.45;
-    }
-
-    .notice.error {
-      display: block;
-      border: 1px solid #fecdd3;
-      color: #9f1239;
-      background: #fff1f2;
-    }
-
-    .notice.ok {
-      display: block;
-      border: 1px solid #bbf7d0;
-      color: #047857;
-      background: #ecfdf5;
-    }
-
-    .result-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(248, 250, 252, .78);
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      width: 100%;
-    }
-
-    .stat {
-      min-width: 0;
-    }
-
-    .stat .num {
-      display: block;
-      font-size: clamp(20px, 3vw, 30px);
-      line-height: 1;
-      color: var(--blue);
-      font-weight: 950;
-      overflow-wrap: anywhere;
-    }
-
-    .stat .cap {
-      display: block;
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .toolbar {
-      display: flex;
-      gap: 7px;
-      flex: 0 0 auto;
-    }
-
-    .icon-btn {
-      width: 42px;
-      height: 42px;
-      display: grid;
-      place-items: center;
-      border-radius: 12px;
-      background: #fff;
-    }
-
-    .icon-btn svg {
-      width: 19px;
-      height: 19px;
-    }
-
-    .empty {
-      min-height: 460px;
-      display: grid;
-      place-items: center;
-      padding: 32px;
-      text-align: center;
-      color: var(--muted);
-    }
-
-    .empty-mark {
-      width: 84px;
-      height: 84px;
-      display: grid;
-      place-items: center;
-      margin: 0 auto 13px;
-      border-radius: 24px;
-      color: var(--blue);
-      background: #eff6ff;
-    }
-
-    .empty-mark svg {
-      width: 42px;
-      height: 42px;
-    }
-
-    .empty h2 {
-      margin: 0 0 8px;
-      color: #334155;
-      font-size: 22px;
-    }
-
-    .empty p {
-      margin: 0;
-      font-weight: 700;
-      line-height: 1.6;
-    }
-
-    .groups {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 12px;
-      padding: 14px;
-    }
-
-    .group-card {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      overflow: hidden;
-      background: #fff;
-      box-shadow: 0 9px 22px rgba(15, 23, 42, .07);
-    }
-
-    .group-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 11px 12px;
-      border-bottom: 1px solid var(--line);
-      background: linear-gradient(135deg, #eff6ff, #f0fdf4);
-      font-weight: 950;
-    }
-
-    .group-title {
-      display: flex;
-      align-items: center;
-      min-width: 0;
-      gap: 8px;
-    }
-
-    .badge {
-      min-width: 31px;
-      height: 31px;
-      display: inline-grid;
-      place-items: center;
-      border-radius: 11px;
+    .small-btn {
+      min-height: 52px;
+      border: 0;
+      border-radius: 14px;
+      padding: 0 18px;
       color: #fff;
       background: var(--blue);
-      font-size: 16px;
       font-weight: 950;
     }
 
-    .count {
-      flex: 0 0 auto;
-      color: #475467;
-      font-size: 12px;
+    .message {
+      margin-top: 12px;
+      min-height: 28px;
+      color: var(--red);
       font-weight: 900;
     }
 
-    .members {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
-      gap: 8px;
-      padding: 12px;
+    .celebrate {
+      animation: pop .6s ease both;
     }
 
-    .member {
-      min-height: 42px;
-      display: grid;
-      place-items: center;
-      border: 1px solid #dbe4f0;
-      border-radius: 12px;
-      background: #f8fafc;
-      color: #111827;
-      font-size: 18px;
-      font-weight: 950;
-    }
-
-    .shake {
-      animation: shake .24s linear 2;
-    }
-
-    @keyframes shake {
-      25% { transform: translateX(-4px); }
-      75% { transform: translateX(4px); }
+    @keyframes pop {
+      0% { transform: scale(.96); }
+      50% { transform: scale(1.04); }
+      100% { transform: scale(1); }
     }
 
     @media (max-width: 900px) {
-      .app {
-        width: min(100% - 18px, 760px);
-        padding-top: 10px;
-      }
-
-      .topbar {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .summary {
-        width: 100%;
-        justify-content: center;
-        border-radius: 14px;
-      }
-
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      .results {
-        min-height: 420px;
-      }
+      .hero,
+      .board,
+      .settings-grid { grid-template-columns: 1fr; }
+      .timer-card { min-width: 0; }
+      .controls { grid-template-columns: 1fr 1fr; }
     }
 
-    @media (max-width: 520px) {
-      .brand {
-        align-items: flex-start;
-      }
-
-      .logo {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
-      }
-
-      .controls,
-      .result-head,
-      .groups {
-        padding: 12px;
-      }
-
-      .result-head {
-        align-items: stretch;
-        flex-direction: column;
-      }
-
-      .toolbar {
-        justify-content: flex-end;
-      }
-
-      .stats {
-        gap: 7px;
-      }
-
-      .range-grid,
-      .button-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .groups {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media print {
-      body {
-        background: #fff;
-      }
-
-      .topbar,
-      .controls,
-      .toolbar,
-      .empty {
-        display: none;
-      }
-
-      .app {
-        width: 100%;
-        padding: 0;
-      }
-
-      .layout {
-        display: block;
-      }
-
-      .panel {
-        border: 0;
-        box-shadow: none;
-      }
-
-      .groups {
-        grid-template-columns: repeat(2, 1fr);
-      }
+    @media (max-width: 540px) {
+      .app { width: min(100% - 18px, 760px); padding-top: 10px; }
+      .title-card { align-items: flex-start; }
+      .logo { width: 54px; height: 54px; font-size: 28px; }
+      .controls { grid-template-columns: 1fr; }
+      .task-list { grid-template-columns: 1fr; min-height: 220px; }
     }
   </style>
 </head>
 <body>
   <main class="app">
-    <header class="topbar">
-      <div class="brand">
-        <div class="logo" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M22 20v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
+    <section class="hero" aria-label="給食当番タイマーの概要">
+      <div class="title-card">
+        <div class="logo" aria-hidden="true">🍚</div>
+        <div>
+          <h1>給食当番 準備タイマー</h1>
+          <p class="lead">係のボタンを押すと「準備完了」へ移動します。タイマー中は1分ごとに急かす音でお知らせします。</p>
+        </div>
+      </div>
+      <div class="timer-card" aria-live="polite">
+        <div class="timer-label">経過時間</div>
+        <div id="timer" class="timer">00:00</div>
+        <div id="status" class="status">スタートを押して開始</div>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="タイマー操作">
+      <button id="startBtn" class="control-btn" type="button">スタート</button>
+      <button id="pauseBtn" class="control-btn secondary" type="button" disabled>一時停止</button>
+      <button id="soundBtn" class="control-btn secondary" type="button">音を試す</button>
+      <button id="resetBtn" class="control-btn good" type="button">リセット</button>
+    </section>
+
+    <section class="board" aria-label="係の準備状況">
+      <div class="panel waiting">
+        <div class="panel-head">
+          <h2 class="panel-title">まだの係</h2>
+          <div id="waitingCount" class="counter">0</div>
+        </div>
+        <div id="waitingList" class="task-list" aria-live="polite"></div>
+      </div>
+      <div class="panel done">
+        <div class="panel-head">
+          <h2 class="panel-title">準備完了</h2>
+          <div id="doneCount" class="counter">0</div>
+        </div>
+        <div id="doneList" class="task-list" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="panel settings" aria-label="係の設定">
+      <div class="settings-grid">
+        <div>
+          <label for="minuteInput">急かす音の間隔（分）</label>
+          <input id="minuteInput" type="number" min="1" max="10" value="1" />
         </div>
         <div>
-          <h1>ランダムグループ分け</h1>
-          <p class="subtitle">番号の範囲とグループ数を選ぶだけで、人数差の少ない班を作れます。</p>
+          <label for="taskInput">係の名前（読点・カンマ区切り）</label>
+          <input id="taskInput" type="text" value="配膳台, 食器, ごはん, おかず, 牛乳, ストロー, いただきます係" />
         </div>
+        <button id="applyBtn" class="small-btn" type="button">係を更新</button>
       </div>
-      <div class="summary" id="summaryPill" aria-live="polite">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M21 7.5V6a2 2 0 0 0-2-2h-4"></path>
-          <path d="M3 16.5V18a2 2 0 0 0 2 2h4"></path>
-          <path d="M16 3.5 19.5 7 16 10.5"></path>
-          <path d="M8 20.5 4.5 17 8 13.5"></path>
-        </svg>
-        <span>1番から31番 / 2グループ</span>
-      </div>
-    </header>
-
-    <div class="layout">
-      <section class="panel controls" aria-label="設定">
-        <div class="section">
-          <h2 class="section-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M4 7h16"></path><path d="M4 12h10"></path><path d="M4 17h7"></path>
-            </svg>
-            番号の範囲
-          </h2>
-          <div class="range-grid">
-            <div>
-              <label for="minNumber">最初の番号</label>
-              <input id="minNumber" class="number-input active" type="text" inputmode="numeric" value="1" aria-label="最初の番号" />
-            </div>
-            <div>
-              <label for="maxNumber">最後の番号</label>
-              <input id="maxNumber" class="number-input" type="text" inputmode="numeric" value="31" aria-label="最後の番号" />
-            </div>
-          </div>
-          <div class="quick-row" aria-label="よく使う範囲">
-            <button class="quick-btn" type="button" data-preset="1,20">1-20</button>
-            <button class="quick-btn" type="button" data-preset="1,31">1-31</button>
-            <button class="quick-btn" type="button" data-preset="1,40">1-40</button>
-          </div>
-          <p class="hint">直接入力できます。下の数字ボタンは、選択中の入力欄に入ります。</p>
-          <div class="numpad" aria-label="数字入力">
-            <button class="key" type="button" data-num="1">1</button>
-            <button class="key" type="button" data-num="2">2</button>
-            <button class="key" type="button" data-num="3">3</button>
-            <button class="key" type="button" data-num="4">4</button>
-            <button class="key" type="button" data-num="5">5</button>
-            <button class="key" type="button" data-num="6">6</button>
-            <button class="key" type="button" data-num="7">7</button>
-            <button class="key" type="button" data-num="8">8</button>
-            <button class="key" type="button" data-num="9">9</button>
-            <button class="key utility" type="button" id="clearBtn" aria-label="入力を消す">C</button>
-            <button class="key" type="button" data-num="0">0</button>
-            <button class="key utility" type="button" id="backBtn" aria-label="一文字戻す">⌫</button>
-          </div>
-        </div>
-
-        <div class="section">
-          <h2 class="section-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-              <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-              <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
-              <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-            </svg>
-            グループ数
-          </h2>
-          <label for="groupCount">いくつに分けますか</label>
-          <select id="groupCount" class="select-box" aria-label="グループ数"></select>
-          <p class="hint" id="groupHelp">対象人数に合わせて、2グループから最大人数分まで選べます。</p>
-        </div>
-
-        <div class="section">
-          <button class="main-btn" type="button" id="generateBtn">グループ分けする</button>
-          <div class="button-grid">
-            <button class="sub-btn" type="button" id="reshuffleBtn">もう一度</button>
-            <button class="sub-btn" type="button" id="resetBtn">初期値に戻す</button>
-          </div>
-          <div id="notice" class="notice" role="status" aria-live="polite"></div>
-        </div>
-      </section>
-
-      <section class="panel results" aria-label="結果">
-        <div class="result-head">
-          <div class="stats">
-            <div class="stat">
-              <span class="num" id="totalStat">31</span>
-              <span class="cap">対象人数</span>
-            </div>
-            <div class="stat">
-              <span class="num" id="groupStat">2</span>
-              <span class="cap">グループ数</span>
-            </div>
-            <div class="stat">
-              <span class="num" id="sizeStat">15-16</span>
-              <span class="cap">1班の人数</span>
-            </div>
-          </div>
-          <div class="toolbar">
-            <button class="icon-btn" type="button" id="copyBtn" title="結果をコピー" aria-label="結果をコピー">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
-            </button>
-            <button class="icon-btn" type="button" id="printBtn" title="印刷" aria-label="印刷">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M6 9V2h12v7"></path>
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                <path d="M6 14h12v8H6z"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div id="empty" class="empty">
-          <div>
-            <div class="empty-mark" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m16 3 4 4-4 4"></path>
-                <path d="M20 7H4"></path>
-                <path d="m8 21-4-4 4-4"></path>
-                <path d="M4 17h16"></path>
-              </svg>
-            </div>
-            <h2>まだ結果はありません</h2>
-            <p>設定を確認して「グループ分けする」を押してください。</p>
-          </div>
-        </div>
-        <div id="groups" class="groups" hidden></div>
-      </section>
-    </div>
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+    </section>
   </main>
 
   <script>
-    const minInput = document.getElementById("minNumber");
-    const maxInput = document.getElementById("maxNumber");
-    const groupSelect = document.getElementById("groupCount");
-    const notice = document.getElementById("notice");
-    const groupsEl = document.getElementById("groups");
-    const emptyEl = document.getElementById("empty");
-    const summaryPill = document.getElementById("summaryPill").querySelector("span");
-    const totalStat = document.getElementById("totalStat");
-    const groupStat = document.getElementById("groupStat");
-    const sizeStat = document.getElementById("sizeStat");
-    let currentInput = minInput;
-    let lastGroups = [];
+    const timerEl = document.getElementById("timer");
+    const statusEl = document.getElementById("status");
+    const waitingList = document.getElementById("waitingList");
+    const doneList = document.getElementById("doneList");
+    const waitingCount = document.getElementById("waitingCount");
+    const doneCount = document.getElementById("doneCount");
+    const startBtn = document.getElementById("startBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const soundBtn = document.getElementById("soundBtn");
+    const applyBtn = document.getElementById("applyBtn");
+    const taskInput = document.getElementById("taskInput");
+    const minuteInput = document.getElementById("minuteInput");
+    const message = document.getElementById("message");
 
-    function setActive(input) {
-      currentInput = input;
-      [minInput, maxInput].forEach((el) => el.classList.toggle("active", el === input));
-      input.focus();
-      input.select();
+    let tasks = [];
+    let done = new Set();
+    let startedAt = 0;
+    let elapsedBeforePause = 0;
+    let timerId = null;
+    let nextChimeAt = 60;
+    let audioContext = null;
+
+    function parseTasks(value) {
+      return value
+        .split(/[、,]/)
+        .map((task) => task.trim())
+        .filter(Boolean);
     }
 
-    function cleanInput(input) {
-      const cleaned = input.value.replace(/[^\d]/g, "").slice(0, 3).replace(/^0+(?=\d)/, "");
-      input.value = cleaned;
+    function formatTime(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
+      const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+      return `${minutes}:${seconds}`;
     }
 
-    function getRange() {
-      return {
-        min: parseInt(minInput.value, 10),
-        max: parseInt(maxInput.value, 10)
-      };
+    function getElapsedSeconds() {
+      if (!timerId) return Math.floor(elapsedBeforePause / 1000);
+      return Math.floor((Date.now() - startedAt + elapsedBeforePause) / 1000);
     }
 
-    function validate() {
-      const { min, max } = getRange();
-      if (Number.isNaN(min) || Number.isNaN(max)) return "最初の番号と最後の番号を入力してください。";
-      if (min < 0 || max < 0) return "番号は0以上で入力してください。";
-      if (min >= max) return "最初の番号は、最後の番号より小さくしてください。";
-      if (max - min + 1 < 2) return "対象人数は2人以上必要です。";
-      return "";
+    function getIntervalSeconds() {
+      const minutes = Number.parseInt(minuteInput.value, 10);
+      return Math.max(1, Number.isNaN(minutes) ? 1 : minutes) * 60;
     }
 
-    function refreshOptions() {
-      const previous = parseInt(groupSelect.value, 10) || 2;
-      const err = validate();
-      groupSelect.innerHTML = "";
+    function beep() {
+      audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+      const now = audioContext.currentTime;
+      [0, .18, .36].forEach((offset, index) => {
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = "square";
+        oscillator.frequency.setValueAtTime(index % 2 ? 880 : 660, now + offset);
+        gain.gain.setValueAtTime(.0001, now + offset);
+        gain.gain.exponentialRampToValueAtTime(.22, now + offset + .02);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + offset + .14);
+        oscillator.connect(gain).connect(audioContext.destination);
+        oscillator.start(now + offset);
+        oscillator.stop(now + offset + .16);
+      });
+    }
 
-      if (err) {
-        const option = document.createElement("option");
-        option.value = "";
-        option.textContent = "番号の範囲を確認してください";
-        groupSelect.appendChild(option);
-        refreshStats();
+    function render() {
+      waitingList.innerHTML = "";
+      doneList.innerHTML = "";
+
+      tasks.forEach((task) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `task-btn${done.has(task) ? " done-task" : ""}`;
+        button.innerHTML = `${task}<small>${done.has(task) ? "押すと戻ります" : "押すと完了へ"}</small>`;
+        button.addEventListener("click", () => toggleTask(task));
+        (done.has(task) ? doneList : waitingList).appendChild(button);
+      });
+
+      waitingCount.textContent = String(tasks.length - done.size);
+      doneCount.textContent = String(done.size);
+
+      if (tasks.length && done.size === tasks.length) {
+        statusEl.textContent = `全員完了！ ${formatTime(getElapsedSeconds())}`;
+        doneList.classList.add("celebrate");
+        window.setTimeout(() => doneList.classList.remove("celebrate"), 650);
+      }
+    }
+
+    function toggleTask(task) {
+      if (done.has(task)) done.delete(task);
+      else done.add(task);
+      render();
+    }
+
+    function tick() {
+      const elapsed = getElapsedSeconds();
+      timerEl.textContent = formatTime(elapsed);
+      if (elapsed >= nextChimeAt) {
+        beep();
+        statusEl.textContent = `${Math.floor(elapsed / 60)}分たちました。急いで準備しよう！`;
+        nextChimeAt += getIntervalSeconds();
+      }
+    }
+
+    function startTimer() {
+      if (timerId) return;
+      startedAt = Date.now();
+      nextChimeAt = Math.max(nextChimeAt, getIntervalSeconds());
+      timerId = window.setInterval(tick, 250);
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+      statusEl.textContent = "準備中です";
+      tick();
+    }
+
+    function pauseTimer() {
+      if (!timerId) return;
+      elapsedBeforePause += Date.now() - startedAt;
+      window.clearInterval(timerId);
+      timerId = null;
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      statusEl.textContent = "一時停止中";
+      tick();
+    }
+
+    function resetAll() {
+      if (timerId) window.clearInterval(timerId);
+      timerId = null;
+      startedAt = 0;
+      elapsedBeforePause = 0;
+      nextChimeAt = getIntervalSeconds();
+      done = new Set();
+      timerEl.textContent = "00:00";
+      statusEl.textContent = "スタートを押して開始";
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      render();
+    }
+
+    function applyTasks() {
+      const nextTasks = parseTasks(taskInput.value);
+      if (!nextTasks.length) {
+        message.textContent = "係の名前を1つ以上入力してください。";
         return;
       }
-
-      const { min, max } = getRange();
-      const total = max - min + 1;
-      for (let i = 2; i <= total; i += 1) {
-        const option = document.createElement("option");
-        option.value = String(i);
-        option.textContent = `${i}グループ`;
-        groupSelect.appendChild(option);
-      }
-      groupSelect.value = String(Math.min(Math.max(previous, 2), total));
-      refreshStats();
+      const uniqueTasks = [...new Set(nextTasks)];
+      tasks = uniqueTasks;
+      done = new Set([...done].filter((task) => uniqueTasks.includes(task)));
+      taskInput.value = uniqueTasks.join(", ");
+      message.textContent = "係を更新しました。";
+      render();
     }
 
-    function refreshStats() {
-      const { min, max } = getRange();
-      const validRange = !Number.isNaN(min) && !Number.isNaN(max) && max >= min;
-      const total = validRange ? max - min + 1 : 0;
-      const groupCount = parseInt(groupSelect.value, 10) || 0;
-
-      totalStat.textContent = total || "-";
-      groupStat.textContent = groupCount || "-";
-
-      if (total && groupCount) {
-        const base = Math.floor(total / groupCount);
-        const remainder = total % groupCount;
-        sizeStat.textContent = remainder === 0 ? String(base) : `${base}-${base + 1}`;
-        summaryPill.textContent = `${min}番から${max}番 / ${groupCount}グループ`;
-      } else {
-        sizeStat.textContent = "-";
-        summaryPill.textContent = "設定を確認してください";
-      }
-      clearNotice();
-    }
-
-    function clearResult() {
-      lastGroups = [];
-      groupsEl.innerHTML = "";
-      groupsEl.hidden = true;
-      emptyEl.hidden = false;
-    }
-
-    function showNotice(message, type = "ok", shake = false) {
-      notice.textContent = message;
-      notice.className = `notice ${type}`;
-      if (shake) {
-        notice.classList.add("shake");
-        setTimeout(() => notice.classList.remove("shake"), 520);
-      }
-    }
-
-    function clearNotice() {
-      notice.textContent = "";
-      notice.className = "notice";
-    }
-
-    function createGroups(min, max, groupCount) {
-      const numbers = Array.from({ length: max - min + 1 }, (_, index) => index + min);
-      for (let i = numbers.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
-      }
-
-      const base = Math.floor(numbers.length / groupCount);
-      const remainder = numbers.length % groupCount;
-      let start = 0;
-
-      return Array.from({ length: groupCount }, (_, index) => {
-        const size = base + (index < remainder ? 1 : 0);
-        const group = numbers.slice(start, start + size);
-        start += size;
-        return group;
-      });
-    }
-
-    function display(groups) {
-      groupsEl.innerHTML = "";
-      groups.forEach((group, index) => {
-        const card = document.createElement("article");
-        card.className = "group-card";
-
-        const head = document.createElement("div");
-        head.className = "group-head";
-        head.innerHTML = `<div class="group-title"><span class="badge">${index + 1}</span><span>グループ ${index + 1}</span></div><span class="count">${group.length}人</span>`;
-
-        const members = document.createElement("div");
-        members.className = "members";
-        group.forEach((number) => {
-          const member = document.createElement("span");
-          member.className = "member";
-          member.textContent = number;
-          members.appendChild(member);
-        });
-
-        card.append(head, members);
-        groupsEl.appendChild(card);
-      });
-      emptyEl.hidden = true;
-      groupsEl.hidden = false;
-      refreshStats();
-    }
-
-    function generate() {
-      const err = validate();
-      if (err) {
-        showNotice(err, "error", true);
-        return;
-      }
-
-      const { min, max } = getRange();
-      const groupCount = parseInt(groupSelect.value, 10);
-      if (!groupCount || groupCount < 2 || groupCount > max - min + 1) {
-        showNotice("グループ数を選んでください。", "error", true);
-        return;
-      }
-
-      lastGroups = createGroups(min, max, groupCount);
-      display(lastGroups);
-      showNotice("グループ分けが完了しました。", "ok");
-    }
-
-    async function copyResult() {
-      if (!lastGroups.length) {
-        showNotice("コピーできる結果がまだありません。", "error", true);
-        return;
-      }
-      const text = lastGroups.map((group, index) => `グループ ${index + 1}: ${group.join(", ")}`).join("\n");
-      try {
-        await navigator.clipboard.writeText(text);
-        showNotice("結果をコピーしました。", "ok");
-      } catch {
-        showNotice("ブラウザの設定によりコピーできませんでした。", "error", true);
-      }
-    }
-
-    [minInput, maxInput].forEach((input) => {
-      input.addEventListener("focus", () => setActive(input));
-      input.addEventListener("input", () => {
-        cleanInput(input);
-        clearResult();
-        refreshOptions();
-      });
+    startBtn.addEventListener("click", startTimer);
+    pauseBtn.addEventListener("click", pauseTimer);
+    resetBtn.addEventListener("click", resetAll);
+    soundBtn.addEventListener("click", () => {
+      beep();
+      message.textContent = "この音が1分ごとに流れます。";
+    });
+    applyBtn.addEventListener("click", applyTasks);
+    minuteInput.addEventListener("change", () => {
+      nextChimeAt = Math.max(getElapsedSeconds() + getIntervalSeconds(), getIntervalSeconds());
+      message.textContent = "音の間隔を更新しました。";
     });
 
-    document.querySelectorAll("[data-num]").forEach((button) => {
-      button.addEventListener("click", () => {
-        if (currentInput.value.length >= 3) {
-          showNotice("番号は3桁まで入力できます。", "error", true);
-          return;
-        }
-        currentInput.value = (currentInput.value + button.dataset.num).replace(/^0+(?=\d)/, "");
-        clearResult();
-        refreshOptions();
-      });
-    });
-
-    document.querySelectorAll("[data-preset]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const [min, max] = button.dataset.preset.split(",");
-        minInput.value = min;
-        maxInput.value = max;
-        setActive(minInput);
-        clearResult();
-        refreshOptions();
-      });
-    });
-
-    document.getElementById("clearBtn").addEventListener("click", () => {
-      currentInput.value = "";
-      clearResult();
-      refreshOptions();
-    });
-
-    document.getElementById("backBtn").addEventListener("click", () => {
-      currentInput.value = currentInput.value.slice(0, -1);
-      clearResult();
-      refreshOptions();
-    });
-
-    document.getElementById("resetBtn").addEventListener("click", () => {
-      minInput.value = "1";
-      maxInput.value = "31";
-      setActive(minInput);
-      clearResult();
-      refreshOptions();
-      showNotice("初期値に戻しました。", "ok");
-    });
-
-    document.getElementById("generateBtn").addEventListener("click", generate);
-    document.getElementById("reshuffleBtn").addEventListener("click", generate);
-    document.getElementById("copyBtn").addEventListener("click", copyResult);
-    document.getElementById("printBtn").addEventListener("click", () => window.print());
-    groupSelect.addEventListener("change", () => {
-      clearResult();
-      refreshStats();
-    });
-
-    refreshOptions();
+    tasks = parseTasks(taskInput.value);
+    resetAll();
   </script>
 </body>
 </html>
