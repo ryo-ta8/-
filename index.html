@@ -270,6 +270,10 @@
       box-shadow: 0 0 0 4px rgba(249, 115, 22, .16);
     }
 
+    .setting-label-spaced {
+      margin-top: 14px;
+    }
+
     .task-editor {
       display: grid;
       gap: 10px;
@@ -380,11 +384,11 @@
         <div class="logo" aria-hidden="true">🍚</div>
         <div>
           <h1>給食当番 準備タイマー</h1>
-          <p class="lead">係のボタンを押すと「準備完了」へ移動します。タイマー中は1分ごとに急かす音でお知らせします。</p>
+          <p class="lead">係のボタンを押すと「準備完了」へ移動します。タイマー中は1分ごとに急かす音でお知らせし、設定した時間からカウントダウンします。</p>
         </div>
       </div>
       <div class="timer-card" aria-live="polite">
-        <div class="timer-label">経過時間</div>
+        <div class="timer-label">残り時間</div>
         <div id="timer" class="timer">00:00</div>
         <div id="status" class="status">スタートを押して開始</div>
       </div>
@@ -417,7 +421,9 @@
     <section class="panel settings" aria-label="係の設定">
       <div class="settings-grid">
         <div>
-          <label for="minuteInput">急かす音の間隔（分）</label>
+          <label for="durationInput">準備時間（分）</label>
+          <input id="durationInput" type="number" min="1" max="60" value="5" />
+          <label for="minuteInput" class="setting-label-spaced">急かす音の間隔（分）</label>
           <input id="minuteInput" type="number" min="1" max="10" value="1" />
         </div>
         <div class="task-editor">
@@ -451,6 +457,7 @@
     const addTaskBtn = document.getElementById("addTaskBtn");
     const taskEditor = document.getElementById("taskEditor");
     const minuteInput = document.getElementById("minuteInput");
+    const durationInput = document.getElementById("durationInput");
     const message = document.getElementById("message");
 
     let tasks = [];
@@ -459,6 +466,7 @@
     let elapsedBeforePause = 0;
     let timerId = null;
     let nextChimeAt = 60;
+    let finished = false;
     let audioContext = null;
 
     const defaultTasks = ["配膳台", "食器", "ごはん", "おかず", "牛乳", "ストロー", "いただきます係"];
@@ -525,21 +533,31 @@
       return Math.max(1, Number.isNaN(minutes) ? 1 : minutes) * 60;
     }
 
+    function getDurationSeconds() {
+      const minutes = Number.parseInt(durationInput.value, 10);
+      return Math.max(1, Number.isNaN(minutes) ? 5 : minutes) * 60;
+    }
+
+    function getRemainingSeconds() {
+      return Math.max(0, getDurationSeconds() - getElapsedSeconds());
+    }
+
     function beep() {
       audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
       const now = audioContext.currentTime;
-      [0, .18, .36].forEach((offset, index) => {
+      const soundLength = 5;
+      for (let offset = 0; offset < soundLength; offset += .22) {
         const oscillator = audioContext.createOscillator();
         const gain = audioContext.createGain();
         oscillator.type = "square";
-        oscillator.frequency.setValueAtTime(index % 2 ? 880 : 660, now + offset);
+        oscillator.frequency.setValueAtTime(Math.floor(offset / .22) % 2 ? 880 : 660, now + offset);
         gain.gain.setValueAtTime(.0001, now + offset);
-        gain.gain.exponentialRampToValueAtTime(.22, now + offset + .02);
-        gain.gain.exponentialRampToValueAtTime(.0001, now + offset + .14);
+        gain.gain.exponentialRampToValueAtTime(.20, now + offset + .03);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + Math.min(offset + .16, soundLength));
         oscillator.connect(gain).connect(audioContext.destination);
         oscillator.start(now + offset);
-        oscillator.stop(now + offset + .16);
-      });
+        oscillator.stop(now + Math.min(offset + .18, soundLength));
+      }
     }
 
     function render() {
@@ -559,7 +577,7 @@
       doneCount.textContent = String(done.size);
 
       if (tasks.length && done.size === tasks.length) {
-        statusEl.textContent = `全員完了！ ${formatTime(getElapsedSeconds())}`;
+        statusEl.textContent = `全員完了！ 残り ${formatTime(getRemainingSeconds())}`;
         doneList.classList.add("celebrate");
         window.setTimeout(() => doneList.classList.remove("celebrate"), 650);
       }
@@ -573,17 +591,39 @@
 
     function tick() {
       const elapsed = getElapsedSeconds();
-      timerEl.textContent = formatTime(elapsed);
+      const remaining = getRemainingSeconds();
+      timerEl.textContent = formatTime(remaining);
+
+      if (remaining <= 0) {
+        if (!finished) {
+          finished = true;
+          beep();
+          statusEl.textContent = "時間です！準備を終わりましょう。";
+        }
+        if (timerId) {
+          window.clearInterval(timerId);
+          timerId = null;
+          startBtn.disabled = false;
+          pauseBtn.disabled = true;
+        }
+        return;
+      }
+
       if (elapsed >= nextChimeAt) {
         beep();
-        statusEl.textContent = `${Math.floor(elapsed / 60)}分たちました。急いで準備しよう！`;
+        statusEl.textContent = `残り${formatTime(remaining)}です。急いで準備しよう！`;
         nextChimeAt += getIntervalSeconds();
       }
     }
 
     function startTimer() {
       if (timerId) return;
+      if (getRemainingSeconds() <= 0) {
+        elapsedBeforePause = 0;
+        nextChimeAt = getIntervalSeconds();
+      }
       startedAt = Date.now();
+      finished = false;
       nextChimeAt = Math.max(nextChimeAt, getIntervalSeconds());
       timerId = window.setInterval(tick, 250);
       startBtn.disabled = true;
@@ -609,8 +649,9 @@
       startedAt = 0;
       elapsedBeforePause = 0;
       nextChimeAt = getIntervalSeconds();
+      finished = false;
       done = new Set();
-      timerEl.textContent = "00:00";
+      timerEl.textContent = formatTime(getDurationSeconds());
       statusEl.textContent = "スタートを押して開始";
       startBtn.disabled = false;
       pauseBtn.disabled = true;
@@ -636,7 +677,7 @@
     resetBtn.addEventListener("click", resetAll);
     soundBtn.addEventListener("click", () => {
       beep();
-      message.textContent = "この音が1分ごとに流れます。";
+      message.textContent = "この音が約5秒間流れます。";
     });
     applyBtn.addEventListener("click", applyTasks);
     addTaskBtn.addEventListener("click", () => {
@@ -646,6 +687,11 @@
     minuteInput.addEventListener("change", () => {
       nextChimeAt = Math.max(getElapsedSeconds() + getIntervalSeconds(), getIntervalSeconds());
       message.textContent = "音の間隔を更新しました。";
+    });
+    durationInput.addEventListener("change", () => {
+      if (!timerId) timerEl.textContent = formatTime(getRemainingSeconds());
+      finished = getRemainingSeconds() <= 0;
+      message.textContent = "準備時間を更新しました。";
     });
 
     tasks = [...defaultTasks];
