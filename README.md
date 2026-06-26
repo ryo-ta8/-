@@ -6,7 +6,8 @@
 
 GitHub Pages で公開できます。
 
-<https://ryo-ta8.github.io/-/>
+- トップページ: <https://ryo-ta8.github.io/->
+- わいわい4択クイズ: <https://ryo-ta8.github.io/-/quiz.html>
 
 ## 機能
 
