@@ -19,13 +19,20 @@
       --red: #e11d48;
       --shadow: 0 18px 45px rgba(124, 45, 18, .14);
       --radius: 22px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
     }
 
     * { box-sizing: border-box; }
 
+    html { min-height: 100%; }
+
     body {
       margin: 0;
       min-height: 100vh;
+      min-height: 100dvh;
       color: var(--ink);
       background:
         radial-gradient(circle at top left, rgba(251, 146, 60, .34), transparent 34%),
@@ -40,7 +47,26 @@
     .app {
       width: min(1180px, calc(100% - 28px));
       margin: 0 auto;
-      padding: 22px 0 32px;
+      padding: calc(22px + var(--safe-top)) var(--safe-right) calc(32px + var(--safe-bottom)) var(--safe-left);
+    }
+
+    body.fullscreen-fallback {
+      overflow: hidden;
+    }
+
+    body.fullscreen-fallback .app {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      width: 100%;
+      max-width: none;
+      overflow: auto;
+      overscroll-behavior: contain;
+      padding: calc(12px + var(--safe-top)) calc(12px + var(--safe-right)) calc(18px + var(--safe-bottom)) calc(12px + var(--safe-left));
+      background:
+        radial-gradient(circle at top left, rgba(251, 146, 60, .34), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(34, 197, 94, .22), transparent 30%),
+        var(--bg);
     }
 
     .hero {
@@ -124,7 +150,7 @@
 
     .controls {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 10px;
       margin-bottom: 16px;
     }
@@ -149,6 +175,19 @@
 
     .control-btn.good {
       background: linear-gradient(135deg, #22c55e, #15803d);
+    }
+
+    .control-btn.back {
+      background: linear-gradient(135deg, #64748b, #334155);
+    }
+
+    .fullscreen-note {
+      margin: -6px 0 14px;
+      min-height: 24px;
+      color: #7c2d12;
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.5;
     }
 
     .control-btn:disabled {
@@ -396,11 +435,14 @@
     </section>
 
     <section class="controls" aria-label="タイマー操作">
+      <button id="backBtn" class="control-btn back" type="button">戻る</button>
+      <button id="fullscreenBtn" class="control-btn" type="button" aria-pressed="false">全画面表示</button>
       <button id="startBtn" class="control-btn" type="button">スタート</button>
       <button id="pauseBtn" class="control-btn secondary" type="button" disabled>一時停止</button>
       <button id="soundBtn" class="control-btn secondary" type="button">音を試す</button>
       <button id="resetBtn" class="control-btn good" type="button">リセット</button>
     </section>
+    <div id="fullscreenNote" class="fullscreen-note" role="status" aria-live="polite"></div>
 
     <section class="board" aria-label="係の準備状況">
       <div class="panel waiting">
@@ -450,6 +492,9 @@
     const doneList = document.getElementById("doneList");
     const waitingCount = document.getElementById("waitingCount");
     const doneCount = document.getElementById("doneCount");
+    const backBtn = document.getElementById("backBtn");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const fullscreenNote = document.getElementById("fullscreenNote");
     const startBtn = document.getElementById("startBtn");
     const pauseBtn = document.getElementById("pauseBtn");
     const resetBtn = document.getElementById("resetBtn");
@@ -470,7 +515,73 @@
     let finished = false;
     let audioContext = null;
 
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
     const defaultTasks = ["配膳台", "食器", "ごはん", "おかず", "牛乳", "ストロー", "いただきます係"];
+
+
+    function isFullscreen() {
+      return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+    }
+
+    function updateFullscreenControls() {
+      const active = isFullscreen() || document.body.classList.contains("fullscreen-fallback");
+      fullscreenBtn.textContent = active ? "全画面を終了" : "全画面表示";
+      fullscreenBtn.setAttribute("aria-pressed", String(active));
+    }
+
+    async function enterFullscreen() {
+      const target = document.documentElement;
+      const request = target.requestFullscreen || target.webkitRequestFullscreen;
+
+      if (request) {
+        try {
+          await request.call(target);
+          fullscreenNote.textContent = "全画面表示にしました。戻るボタンまたはEscで終了できます。";
+          updateFullscreenControls();
+          return;
+        } catch (error) {
+          console.warn("Fullscreen request failed:", error);
+        }
+      }
+
+      document.body.classList.add("fullscreen-fallback");
+      window.scrollTo(0, 0);
+      fullscreenNote.textContent = isIos
+        ? "iPhone/iPadでブラウザが全画面を許可しない場合は、画面内だけを大きく表示します。共有からホーム画面に追加すると、より全画面に近く使えます。"
+        : "このブラウザでは全画面APIが使えないため、画面内を大きく表示しています。";
+      updateFullscreenControls();
+    }
+
+    async function exitFullscreenMode() {
+      if (isFullscreen()) {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exit) await exit.call(document);
+      }
+      document.body.classList.remove("fullscreen-fallback");
+      fullscreenNote.textContent = "全画面表示を終了しました。";
+      updateFullscreenControls();
+    }
+
+    function toggleFullscreen() {
+      if (isFullscreen() || document.body.classList.contains("fullscreen-fallback")) {
+        exitFullscreenMode();
+      } else {
+        enterFullscreen();
+      }
+    }
+
+    function goBack() {
+      if (isFullscreen() || document.body.classList.contains("fullscreen-fallback")) {
+        exitFullscreenMode();
+        return;
+      }
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = "./";
+      }
+    }
 
     function getEditorTasks() {
       return [...taskEditor.querySelectorAll("input")]
@@ -673,6 +784,10 @@
       render();
     }
 
+    backBtn.addEventListener("click", goBack);
+    fullscreenBtn.addEventListener("click", toggleFullscreen);
+    document.addEventListener("fullscreenchange", updateFullscreenControls);
+    document.addEventListener("webkitfullscreenchange", updateFullscreenControls);
     startBtn.addEventListener("click", startTimer);
     pauseBtn.addEventListener("click", pauseTimer);
     resetBtn.addEventListener("click", resetAll);
@@ -698,6 +813,7 @@
     tasks = [...defaultTasks];
     renderTaskEditor(tasks);
     resetAll();
+    updateFullscreenControls();
   </script>
 </body>
 </html>
