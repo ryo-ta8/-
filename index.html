@@ -50,23 +50,77 @@
       padding: calc(22px + var(--safe-top)) var(--safe-right) calc(32px + var(--safe-bottom)) var(--safe-left);
     }
 
-    body.fullscreen-fallback {
+    body.fullscreen-fallback,
+    body.fullscreen-board {
       overflow: hidden;
     }
 
-    body.fullscreen-fallback .app {
+    body.fullscreen-fallback .app,
+    body.fullscreen-board .app {
       position: fixed;
       inset: 0;
       z-index: 10;
       width: 100%;
       max-width: none;
-      overflow: auto;
+      overflow: hidden;
       overscroll-behavior: contain;
-      padding: calc(12px + var(--safe-top)) calc(12px + var(--safe-right)) calc(18px + var(--safe-bottom)) calc(12px + var(--safe-left));
+      padding: calc(10px + var(--safe-top)) calc(10px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(10px + var(--safe-left));
       background:
-        radial-gradient(circle at top left, rgba(251, 146, 60, .34), transparent 34%),
-        radial-gradient(circle at bottom right, rgba(34, 197, 94, .22), transparent 30%),
+        radial-gradient(circle at top left, rgba(251, 146, 60, .24), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(34, 197, 94, .18), transparent 30%),
         var(--bg);
+    }
+
+    body.fullscreen-board .hero,
+    body.fullscreen-board .settings,
+    body.fullscreen-board .fullscreen-note {
+      display: none;
+    }
+
+    body.fullscreen-board .controls {
+      position: fixed;
+      top: calc(10px + var(--safe-top));
+      right: calc(10px + var(--safe-right));
+      z-index: 30;
+      display: flex;
+      width: auto;
+      max-width: calc(100vw - 20px - var(--safe-left) - var(--safe-right));
+      gap: 8px;
+      margin: 0;
+      opacity: .92;
+    }
+
+    body.fullscreen-board .control-btn {
+      min-height: 42px;
+      padding: 0 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, .16);
+    }
+
+    body.fullscreen-board .board {
+      height: calc(100dvh - 20px - var(--safe-top) - var(--safe-bottom));
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    body.fullscreen-board .panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    body.fullscreen-board .panel-head {
+      padding: 12px 14px;
+    }
+
+    body.fullscreen-board .task-list {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      align-content: start;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
 
     .hero {
@@ -385,6 +439,48 @@
       font-weight: 900;
     }
 
+    .finish-btn {
+      min-height: 120px;
+      border: 0;
+      border-radius: 22px;
+      color: #fff;
+      background: linear-gradient(135deg, #fb7185, #e11d48);
+      box-shadow: 0 16px 30px rgba(225, 29, 72, .24);
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 950;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: calc(22px + var(--safe-top));
+      z-index: 60;
+      width: min(560px, calc(100vw - 28px));
+      padding: 18px 20px;
+      border: 3px solid #fdba74;
+      border-radius: 22px;
+      color: #7c2d12;
+      background: rgba(255, 255, 255, .97);
+      box-shadow: 0 22px 50px rgba(124, 45, 18, .22);
+      text-align: center;
+      font-size: clamp(20px, 3.4vw, 34px);
+      font-weight: 950;
+      line-height: 1.35;
+      transform: translate(-50%, -140%);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform .22s ease, opacity .22s ease;
+    }
+
+    .toast.show {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+
+    body.fullscreen-board .toast {
+      top: calc(68px + var(--safe-top));
+    }
+
     .celebrate {
       animation: pop .6s ease both;
     }
@@ -403,6 +499,19 @@
       .controls { grid-template-columns: 1fr 1fr; }
     }
 
+    @media (max-width: 700px) {
+      body.fullscreen-board .controls {
+        left: calc(8px + var(--safe-left));
+        right: calc(8px + var(--safe-right));
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      body.fullscreen-board .board {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (max-width: 540px) {
       .app { width: min(100% - 18px, 760px); padding-top: 10px; }
       .title-card { align-items: flex-start; }
@@ -417,6 +526,7 @@
   </style>
 </head>
 <body>
+  <div id="toast" class="toast" role="alert" aria-live="assertive"></div>
   <main class="app">
     <section class="hero" aria-label="給食当番タイマーの概要">
       <div class="title-card">
@@ -505,6 +615,7 @@
     const minuteInput = document.getElementById("minuteInput");
     const durationInput = document.getElementById("durationInput");
     const message = document.getElementById("message");
+    const toast = document.getElementById("toast");
 
     let tasks = [];
     let done = new Set();
@@ -514,6 +625,7 @@
     let nextChimeAt = 60;
     let finished = false;
     let audioContext = null;
+    let toastId = null;
 
     const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
@@ -526,6 +638,7 @@
 
     function updateFullscreenControls() {
       const active = isFullscreen() || document.body.classList.contains("fullscreen-fallback");
+      document.body.classList.toggle("fullscreen-board", active);
       fullscreenBtn.textContent = active ? "全画面を終了" : "全画面表示";
       fullscreenBtn.setAttribute("aria-pressed", String(active));
     }
@@ -558,7 +671,7 @@
         const exit = document.exitFullscreen || document.webkitExitFullscreen;
         if (exit) await exit.call(document);
       }
-      document.body.classList.remove("fullscreen-fallback");
+      document.body.classList.remove("fullscreen-fallback", "fullscreen-board");
       fullscreenNote.textContent = "全画面表示を終了しました。";
       updateFullscreenControls();
     }
@@ -654,6 +767,13 @@
       return Math.max(0, getDurationSeconds() - getElapsedSeconds());
     }
 
+    function showToast(text, duration = 5000) {
+      window.clearTimeout(toastId);
+      toast.textContent = text;
+      toast.classList.add("show");
+      toastId = window.setTimeout(() => toast.classList.remove("show"), duration);
+    }
+
     function beep() {
       audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
       const now = audioContext.currentTime;
@@ -689,6 +809,12 @@
       doneCount.textContent = String(done.size);
 
       if (tasks.length && done.size === tasks.length) {
+        const finishButton = document.createElement("button");
+        finishButton.type = "button";
+        finishButton.className = "finish-btn";
+        finishButton.textContent = "タップして終了";
+        finishButton.addEventListener("click", finishPreparation);
+        waitingList.appendChild(finishButton);
         statusEl.textContent = `全員完了！ 残り ${formatTime(getRemainingSeconds())}`;
         doneList.classList.add("celebrate");
         window.setTimeout(() => doneList.classList.remove("celebrate"), 650);
@@ -699,6 +825,21 @@
       if (done.has(task)) done.delete(task);
       else done.add(task);
       render();
+    }
+
+    function finishPreparation() {
+      const elapsed = getElapsedSeconds();
+      if (timerId) {
+        window.clearInterval(timerId);
+        timerId = null;
+      }
+      finished = true;
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      timerEl.textContent = formatTime(getRemainingSeconds());
+      statusEl.textContent = `終了しました（${formatTime(elapsed)}）`;
+      beep();
+      showToast(`${Math.floor(elapsed / 60)}分${elapsed % 60}秒でした。出発してください！`, 5000);
     }
 
     function tick() {
@@ -723,7 +864,10 @@
 
       if (elapsed >= nextChimeAt) {
         beep();
-        statusEl.textContent = `残り${formatTime(remaining)}です。急いで準備しよう！`;
+        const remainingMinutes = Math.ceil(remaining / 60);
+        const hurryMessage = `残り${remainingMinutes}分です。急いで準備しよう！`;
+        statusEl.textContent = hurryMessage;
+        showToast(hurryMessage, 5000);
         nextChimeAt += getIntervalSeconds();
       }
     }
