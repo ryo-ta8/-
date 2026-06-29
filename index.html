@@ -71,10 +71,47 @@
         var(--bg);
     }
 
-    body.fullscreen-board .hero,
     body.fullscreen-board .settings,
     body.fullscreen-board .fullscreen-note {
       display: none;
+    }
+
+    body.fullscreen-board .hero {
+      position: fixed;
+      top: calc(10px + var(--safe-top));
+      left: calc(10px + var(--safe-left));
+      z-index: 28;
+      display: block;
+      width: min(420px, calc(100vw - 220px - var(--safe-left) - var(--safe-right)));
+      margin: 0;
+      pointer-events: none;
+    }
+
+    body.fullscreen-board .title-card {
+      display: none;
+    }
+
+    body.fullscreen-board .timer-card {
+      min-width: 0;
+      padding: 12px 18px 14px;
+      border-color: rgba(249, 115, 22, .72);
+      background: rgba(255, 255, 255, .92);
+      box-shadow: 0 18px 42px rgba(124, 45, 18, .20);
+      backdrop-filter: blur(10px);
+    }
+
+    body.fullscreen-board .timer-label {
+      font-size: clamp(13px, 1.7vw, 18px);
+    }
+
+    body.fullscreen-board .timer {
+      font-size: clamp(60px, 8vw, 112px);
+      text-shadow: 0 4px 14px rgba(194, 65, 12, .18);
+    }
+
+    body.fullscreen-board .status {
+      min-height: 0;
+      font-size: clamp(14px, 1.6vw, 20px);
     }
 
     body.fullscreen-board .controls {
@@ -100,6 +137,7 @@
 
     body.fullscreen-board .board {
       height: calc(100dvh - 20px - var(--safe-top) - var(--safe-bottom));
+      padding-top: clamp(108px, 13vw, 156px);
       grid-template-columns: 1fr 1fr;
       gap: 10px;
       align-items: stretch;
@@ -500,6 +538,24 @@
     }
 
     @media (max-width: 700px) {
+      body.fullscreen-board .hero {
+        top: auto;
+        right: calc(8px + var(--safe-right));
+        bottom: calc(8px + var(--safe-bottom));
+        left: calc(8px + var(--safe-left));
+        width: auto;
+      }
+
+      body.fullscreen-board .timer-card {
+        width: min(440px, 100%);
+        margin: 0 auto;
+        padding: 10px 14px 12px;
+      }
+
+      body.fullscreen-board .timer {
+        font-size: clamp(56px, 18vw, 92px);
+      }
+
       body.fullscreen-board .controls {
         left: calc(8px + var(--safe-left));
         right: calc(8px + var(--safe-right));
@@ -509,6 +565,8 @@
 
       body.fullscreen-board .board {
         grid-template-columns: 1fr;
+        padding-top: 96px;
+        padding-bottom: clamp(118px, 28vw, 154px);
       }
     }
 
