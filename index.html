@@ -76,15 +76,19 @@
       display: none;
     }
 
+    body.fullscreen-board .app {
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      gap: 10px;
+    }
+
     body.fullscreen-board .hero {
-      position: fixed;
-      top: calc(10px + var(--safe-top));
-      left: calc(10px + var(--safe-left));
-      z-index: 28;
+      position: static;
+      z-index: auto;
       display: block;
-      width: min(420px, calc(100vw - 220px - var(--safe-left) - var(--safe-right)));
-      margin: 0;
-      pointer-events: none;
+      width: min(520px, 100%);
+      margin: 0 auto;
+      pointer-events: auto;
     }
 
     body.fullscreen-board .title-card {
@@ -115,13 +119,12 @@
     }
 
     body.fullscreen-board .controls {
-      position: fixed;
-      top: calc(10px + var(--safe-top));
-      right: calc(10px + var(--safe-right));
-      z-index: 30;
+      position: static;
+      z-index: auto;
       display: flex;
-      width: auto;
-      max-width: calc(100vw - 20px - var(--safe-left) - var(--safe-right));
+      justify-content: center;
+      width: 100%;
+      max-width: 100%;
       gap: 8px;
       margin: 0;
       opacity: .92;
@@ -136,11 +139,13 @@
     }
 
     body.fullscreen-board .board {
-      height: calc(100dvh - 20px - var(--safe-top) - var(--safe-bottom));
-      padding-top: clamp(108px, 13vw, 156px);
+      min-height: 0;
+      height: auto;
+      padding: 0;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
       align-items: stretch;
+      overflow: hidden;
     }
 
     body.fullscreen-board .panel {
@@ -539,11 +544,7 @@
 
     @media (max-width: 700px) {
       body.fullscreen-board .hero {
-        top: auto;
-        right: calc(8px + var(--safe-right));
-        bottom: calc(8px + var(--safe-bottom));
-        left: calc(8px + var(--safe-left));
-        width: auto;
+        width: 100%;
       }
 
       body.fullscreen-board .timer-card {
@@ -557,16 +558,13 @@
       }
 
       body.fullscreen-board .controls {
-        left: calc(8px + var(--safe-left));
-        right: calc(8px + var(--safe-right));
-        justify-content: flex-end;
+        justify-content: center;
         flex-wrap: wrap;
       }
 
       body.fullscreen-board .board {
         grid-template-columns: 1fr;
-        padding-top: 96px;
-        padding-bottom: clamp(118px, 28vw, 154px);
+        padding: 0;
       }
     }
 
@@ -850,6 +848,30 @@
       }
     }
 
+    function finishWhistle() {
+      audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+      const now = audioContext.currentTime;
+      const pattern = [
+        { start: 0, duration: .62, frequency: 1320 },
+        { start: .72, duration: .62, frequency: 1320 },
+        { start: 1.48, duration: 1.05, frequency: 1480 },
+      ];
+
+      pattern.forEach(({ start, duration, frequency }) => {
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(frequency, now + start);
+        oscillator.frequency.linearRampToValueAtTime(frequency + 70, now + start + duration);
+        gain.gain.setValueAtTime(.0001, now + start);
+        gain.gain.exponentialRampToValueAtTime(.34, now + start + .04);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + start + duration);
+        oscillator.connect(gain).connect(audioContext.destination);
+        oscillator.start(now + start);
+        oscillator.stop(now + start + duration + .02);
+      });
+    }
+
     function render() {
       waitingList.innerHTML = "";
       doneList.innerHTML = "";
@@ -896,7 +918,7 @@
       pauseBtn.disabled = true;
       timerEl.textContent = formatTime(getRemainingSeconds());
       statusEl.textContent = `終了しました（${formatTime(elapsed)}）`;
-      beep();
+      finishWhistle();
       showToast(`${Math.floor(elapsed / 60)}分${elapsed % 60}秒でした。出発してください！`, 5000);
     }
 
