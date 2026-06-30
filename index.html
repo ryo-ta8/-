@@ -603,17 +603,81 @@
       }
 
       body.fullscreen-board .timer {
-        font-size: clamp(56px, 18vw, 92px);
+        font-size: clamp(48px, 16vw, 86px);
       }
 
       body.fullscreen-board .controls {
-        justify-content: center;
-        flex-wrap: wrap;
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+
+      body.fullscreen-board .control-btn {
+        flex: 0 0 auto;
       }
 
       body.fullscreen-board .board {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         padding: 0;
+      }
+    }
+
+    @media (max-width: 700px) and (orientation: portrait) {
+      body.fullscreen-board .app {
+        gap: 8px;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+      }
+
+      body.fullscreen-board .timer-card {
+        padding: 8px 12px 10px;
+      }
+
+      body.fullscreen-board .timer-label,
+      body.fullscreen-board .status {
+        font-size: 13px;
+      }
+
+      body.fullscreen-board .timer {
+        font-size: clamp(42px, 15vw, 72px);
+      }
+
+      body.fullscreen-board .board {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 8px;
+      }
+
+      body.fullscreen-board .panel-head {
+        padding: 8px 12px;
+      }
+
+      body.fullscreen-board .panel-title {
+        font-size: clamp(20px, 7vw, 30px);
+      }
+
+      body.fullscreen-board .counter {
+        min-width: 58px;
+        padding: 6px 10px;
+        font-size: clamp(18px, 6vw, 26px);
+      }
+
+      body.fullscreen-board .task-list {
+        gap: 8px;
+        padding: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr));
+      }
+
+      body.fullscreen-board .task-btn,
+      body.fullscreen-board .finish-btn {
+        min-height: clamp(64px, 10vh, 96px);
+        border-width: 3px;
+        border-radius: 18px;
+        font-size: clamp(18px, 7vw, 30px);
+      }
+
+      body.fullscreen-board .task-btn small {
+        font-size: 12px;
       }
     }
 
