@@ -17,6 +17,7 @@
       --green-soft: #dcfce7;
       --blue: #2563eb;
       --red: #e11d48;
+      --yellow: #facc15;
       --shadow: 0 18px 45px rgba(124, 45, 18, .14);
       --radius: 22px;
       --safe-top: env(safe-area-inset-top, 0px);
@@ -283,6 +284,54 @@
       font-weight: 900;
     }
 
+    .progress-shell {
+      margin-top: 12px;
+      height: 14px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #ffedd5;
+      box-shadow: inset 0 0 0 2px rgba(253, 186, 116, .62);
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--green), var(--yellow), var(--orange));
+      transition: width .25s ease;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0 0 16px;
+    }
+
+    .quick-btn {
+      min-height: 58px;
+      border: 2px solid #fdba74;
+      border-radius: 18px;
+      color: #7c2d12;
+      background: rgba(255, 255, 255, .88);
+      box-shadow: 0 10px 20px rgba(124, 45, 18, .08);
+      font-weight: 950;
+    }
+
+    .quick-btn strong {
+      display: block;
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    .quick-btn span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
     .controls {
       display: grid;
       grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -306,6 +355,11 @@
       background: #fff7ed;
       border: 2px solid var(--line);
       box-shadow: none;
+    }
+
+    .control-btn.primary {
+      grid-column: span 2;
+      font-size: clamp(18px, 2.5vw, 26px);
     }
 
     .control-btn.good {
@@ -379,6 +433,20 @@
       gap: 12px;
       min-height: 330px;
       padding: 16px;
+    }
+
+    .empty-state {
+      display: grid;
+      place-items: center;
+      min-height: 120px;
+      border: 3px dashed #fdba74;
+      border-radius: 20px;
+      color: #9a3412;
+      background: #fff7ed;
+      text-align: center;
+      font-size: clamp(18px, 2.8vw, 28px);
+      font-weight: 950;
+      line-height: 1.45;
     }
 
     .task-btn {
@@ -588,7 +656,9 @@
       .board,
       .settings-grid { grid-template-columns: 1fr; }
       .timer-card { min-width: 0; }
-      .controls { grid-template-columns: 1fr 1fr; }
+      .controls,
+      .quick-actions { grid-template-columns: 1fr 1fr; }
+      .control-btn.primary { grid-column: span 2; }
     }
 
     @media (max-width: 700px) {
@@ -685,7 +755,9 @@
       .app { width: min(100% - 18px, 760px); padding-top: 10px; }
       .title-card { align-items: flex-start; }
       .logo { width: 54px; height: 54px; font-size: 28px; }
-      .controls { grid-template-columns: 1fr; }
+      .controls,
+      .quick-actions { grid-template-columns: 1fr; }
+      .control-btn.primary { grid-column: span 1; }
       .task-list { grid-template-columns: 1fr; min-height: 220px; }
       .task-editor-head { align-items: stretch; flex-direction: column; }
       .apply-row { display: block; }
@@ -710,16 +782,24 @@
         <div class="timer-label">残り時間</div>
         <div id="timer" class="timer">00:00</div>
         <div id="status" class="status">スタートを押して開始</div>
+        <div class="progress-shell" aria-label="準備の進み具合"><div id="progressBar" class="progress-bar"></div></div>
       </div>
     </section>
 
+    <section class="quick-actions" aria-label="よく使う準備時間">
+      <button class="quick-btn" type="button" data-minutes="3"><strong>3分</strong><span>急いで準備</span></button>
+      <button class="quick-btn" type="button" data-minutes="5"><strong>5分</strong><span>標準</span></button>
+      <button class="quick-btn" type="button" data-minutes="7"><strong>7分</strong><span>ゆっくり</span></button>
+      <button class="quick-btn" type="button" data-minutes="10"><strong>10分</strong><span>余裕あり</span></button>
+    </section>
+
     <section class="controls" aria-label="タイマー操作">
-      <button id="backBtn" class="control-btn back" type="button">戻る</button>
-      <button id="fullscreenBtn" class="control-btn" type="button" aria-pressed="false">全画面表示</button>
-      <button id="startBtn" class="control-btn" type="button">スタート</button>
+      <button id="startBtn" class="control-btn primary" type="button">▶ はじめる</button>
       <button id="pauseBtn" class="control-btn secondary" type="button" disabled>一時停止</button>
-      <button id="soundBtn" class="control-btn secondary" type="button">音を試す</button>
       <button id="resetBtn" class="control-btn good" type="button">リセット</button>
+      <button id="fullscreenBtn" class="control-btn" type="button" aria-pressed="false">全画面表示</button>
+      <button id="soundBtn" class="control-btn secondary" type="button">音を試す</button>
+      <button id="backBtn" class="control-btn back" type="button">戻る</button>
     </section>
     <div id="fullscreenNote" class="fullscreen-note" role="status" aria-live="polite"></div>
 
@@ -767,6 +847,7 @@
   <script>
     const timerEl = document.getElementById("timer");
     const statusEl = document.getElementById("status");
+    const progressBar = document.getElementById("progressBar");
     const waitingList = document.getElementById("waitingList");
     const doneList = document.getElementById("doneList");
     const waitingCount = document.getElementById("waitingCount");
@@ -993,13 +1074,21 @@
         const button = document.createElement("button");
         button.type = "button";
         button.className = `task-btn${done.has(task) ? " done-task" : ""}`;
-        button.innerHTML = `${task}<small>${done.has(task) ? "押すと戻ります" : "押すと完了へ"}</small>`;
+        button.innerHTML = `${task}<small>${done.has(task) ? "↩ 戻す" : "✓ できた"}</small>`;
         button.addEventListener("click", () => toggleTask(task));
         (done.has(task) ? doneList : waitingList).appendChild(button);
       });
 
       waitingCount.textContent = String(tasks.length - done.size);
       doneCount.textContent = String(done.size);
+
+      if (tasks.length && done.size === 0) {
+        doneList.innerHTML = '<div class="empty-state">できた係をタップすると<br>ここに移動します</div>';
+      }
+
+      if (tasks.length && done.size === tasks.length) {
+        waitingList.innerHTML = '';
+      }
 
       if (tasks.length && done.size === tasks.length) {
         const finishButton = document.createElement("button");
@@ -1028,6 +1117,7 @@
       }
       finished = true;
       startBtn.disabled = false;
+      startBtn.textContent = "▶ もう一度はじめる";
       pauseBtn.disabled = true;
       timerEl.textContent = formatTime(getRemainingSeconds());
       statusEl.textContent = `終了しました（${formatTime(elapsed)}）`;
@@ -1039,6 +1129,8 @@
       const elapsed = getElapsedSeconds();
       const remaining = getRemainingSeconds();
       timerEl.textContent = formatTime(remaining);
+      const duration = getDurationSeconds();
+      progressBar.style.width = `${Math.min(100, Math.max(0, (getElapsedSeconds() / duration) * 100))}%`;
 
       if (remaining <= 0) {
         if (!finished) {
@@ -1050,6 +1142,7 @@
           window.clearInterval(timerId);
           timerId = null;
           startBtn.disabled = false;
+          startBtn.textContent = "▶ もう一度はじめる";
           pauseBtn.disabled = true;
         }
         return;
@@ -1076,8 +1169,9 @@
       nextChimeAt = Math.max(nextChimeAt, getIntervalSeconds());
       timerId = window.setInterval(tick, 250);
       startBtn.disabled = true;
+      startBtn.textContent = "準備中";
       pauseBtn.disabled = false;
-      statusEl.textContent = "準備中です";
+      statusEl.textContent = "準備中です。できた係からタップ！";
       tick();
     }
 
@@ -1087,6 +1181,7 @@
       window.clearInterval(timerId);
       timerId = null;
       startBtn.disabled = false;
+      startBtn.textContent = "▶ 再開";
       pauseBtn.disabled = true;
       statusEl.textContent = "一時停止中";
       tick();
@@ -1103,7 +1198,9 @@
       timerEl.textContent = formatTime(getDurationSeconds());
       statusEl.textContent = "スタートを押して開始";
       startBtn.disabled = false;
+      startBtn.textContent = "▶ はじめる";
       pauseBtn.disabled = true;
+      progressBar.style.width = "0%";
       render();
     }
 
@@ -1128,6 +1225,15 @@
     startBtn.addEventListener("click", startTimer);
     pauseBtn.addEventListener("click", pauseTimer);
     resetBtn.addEventListener("click", resetAll);
+    document.querySelectorAll("[data-minutes]").forEach((button) => {
+      button.addEventListener("click", () => {
+        durationInput.value = button.dataset.minutes;
+        if (!timerId) timerEl.textContent = formatTime(getRemainingSeconds());
+        finished = getRemainingSeconds() <= 0;
+        message.textContent = `${button.dataset.minutes}分にしました。`;
+        tick();
+      });
+    });
     soundBtn.addEventListener("click", () => {
       beep();
       message.textContent = "この音が約5秒間流れます。";
