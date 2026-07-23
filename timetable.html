@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f8fafc">
+  <title>今日の時間割</title>
+  <style>
+    :root{--ink:#172033;--muted:#687386;--line:#dce3ec;--panel:#fff;--accent:#3157d5;--accent2:#6c43d8;--danger:#d33f49;--radius:22px;--shadow:0 16px 40px rgba(30,45,75,.12)}
+    *{box-sizing:border-box}html,body{min-height:100%;margin:0}body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:var(--ink);background:#f3f6fb}button,input{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:transparent}.app{width:min(1120px,calc(100% - 24px));margin:auto;padding:18px 0 30px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}h1{margin:0;font-size:clamp(28px,4vw,46px);letter-spacing:.02em}.sub{margin:5px 0 0;color:var(--muted);font-weight:700}.count{min-width:92px;padding:11px 15px;border-radius:999px;background:#e8edff;color:#2647b8;text-align:center;font-size:20px;font-weight:900}.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}.preview{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:12px;margin-bottom:14px}.slot{min-height:82px;display:grid;place-items:center;padding:8px;border:2px dashed #d5dce7;border-radius:16px;color:#9aa4b2;background:#f8fafc;text-align:center;font-weight:900}.slot.filled{border-style:solid;border-color:#cbd5ff;color:#243b83;background:#eef1ff}.slot small{display:block;margin-bottom:4px;color:#7b8798;font-size:12px}.subjects{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px}.subject{min-height:78px;border:0;border-radius:18px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 8px 18px color-mix(in srgb,var(--c1) 25%,transparent);font-size:clamp(20px,2.7vw,30px);font-weight:900;transition:transform .12s}.subject:active{transform:scale(.97)}.actions{display:grid;grid-template-columns:1fr 1fr 2fr;gap:10px;margin-top:14px}.action{min-height:60px;border:1px solid var(--line);border-radius:17px;background:#fff;color:#3b4758;font-weight:900}.action.primary{border:0;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));font-size:22px}.custom{display:flex;gap:8px;margin-top:10px}.custom input{width:100%;min-height:56px;padding:0 16px;border:2px solid var(--line);border-radius:16px;outline:none;font-weight:800}.custom input:focus{border-color:#8da2f2}.custom button{min-width:120px;border:0;border-radius:16px;color:#fff;background:#455064;font-weight:900}
+    .board{display:none;position:fixed;inset:0;z-index:10;padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));background:#f8fafc}.board.show{display:grid;grid-template-rows:auto 1fr auto;gap:12px}.board-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.board-title{margin:0;font-size:clamp(28px,4.5vw,58px)}.date{color:#667085;font-size:clamp(15px,2vw,24px);font-weight:800}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,1.5vw,18px);min-height:0}.card{display:grid;grid-template-columns:auto 1fr;align-items:center;overflow:hidden;border:2px solid #dfe5ee;border-radius:clamp(18px,2vw,28px);background:#fff;box-shadow:0 12px 30px rgba(30,45,75,.10)}.period{align-self:stretch;display:grid;place-items:center;min-width:clamp(58px,7vw,90px);color:#fff;background:linear-gradient(160deg,var(--c1),var(--c2));font-size:clamp(26px,4vw,52px);font-weight:950}.name{padding:12px;text-align:center;font-size:clamp(32px,5vw,72px);font-weight:950;line-height:1.05}.board-actions{display:flex;justify-content:flex-end;gap:8px}.board-actions button{min-height:48px;padding:0 18px;border:1px solid #d9e0e9;border-radius:999px;color:#465163;background:#fff;font-weight:900}.empty-board{grid-column:1/-1;display:grid;place-items:center;color:#788395;font-size:clamp(24px,4vw,48px);font-weight:900}
+    @media(max-width:760px){.preview{grid-template-columns:repeat(3,1fr)}.subjects{grid-template-columns:repeat(3,1fr)}.actions{grid-template-columns:1fr 1fr}.action.primary{grid-column:1/-1;grid-row:1}.cards{grid-template-columns:repeat(2,1fr)}.card{grid-template-columns:1fr;grid-template-rows:auto 1fr}.period{align-self:auto;min-height:48px}.name{font-size:clamp(28px,9vw,54px)}}
+    @media(max-width:430px){.app{width:min(100% - 16px,1120px);padding-top:10px}.subjects{gap:8px;padding:10px}.subject{min-height:66px;font-size:19px}.custom button{min-width:90px}.board{padding:8px}.board-head{align-items:flex-start}.cards{gap:7px}.card{border-radius:15px}.period{min-height:38px;font-size:24px}.name{font-size:clamp(25px,8.5vw,40px)}}
+  </style>
+</head>
+<body>
+<main class="app">
+  <header class="top"><div><h1>今日の時間割</h1><p class="sub">教科を、時間割の順に押してください</p></div><div class="count" id="count">0 / 6</div></header>
+  <section class="preview panel" id="preview" aria-label="入力中の時間割"></section>
+  <section class="subjects panel" id="subjects" aria-label="教科を選ぶ"></section>
+  <div class="custom"><input id="customName" maxlength="8" placeholder="その他の教科・行事"><button id="addCustom" type="button">追加</button></div>
+  <div class="actions"><button class="action" id="undo" type="button">1つ戻す</button><button class="action" id="clear" type="button">全部消す</button><button class="action primary" id="show" type="button">時間割を表示</button></div>
+</main>
+<section class="board" id="board" aria-label="今日の時間割 全画面表示">
+  <header class="board-head"><div><h2 class="board-title">今日の時間割</h2><div class="date" id="date"></div></div></header>
+  <div class="cards" id="cards"></div>
+  <div class="board-actions"><button id="edit" type="button">編集に戻る</button><button id="fullscreen" type="button">全画面</button></div>
+</section>
+<script>
+const subjectData=[
+  ["国語","#e85663","#bd3450"],["算数","#3b82e6","#2459bc"],["理科","#14a66f","#087a55"],["社会","#e99027","#c46713"],
+  ["英語","#7b55df","#5731b6"],["音楽","#d84fa4","#aa307a"],["図工","#f06b3f","#d04428"],["体育","#12a6b5","#087b91"],
+  ["道徳","#7a879a","#536174"],["学活","#5870c7","#394fa6"],["総合","#16a085","#0b7462"],["行事","#9a6b45","#70482b"]
+];
+const schedule=[];const $=id=>document.getElementById(id);const subjects=$("subjects"),preview=$("preview"),cards=$("cards"),board=$("board");
+function colors(name){return subjectData.find(x=>x[0]===name)?.slice(1)||["#59677c","#384558"]}
+function add(name){name=name.trim();if(!name||schedule.length>=6)return;schedule.push(name);render();if(schedule.length===6)openBoard()}
+function render(){preview.innerHTML="";for(let i=0;i<6;i++){const el=document.createElement("div");el.className="slot"+(schedule[i]?" filled":"");el.innerHTML=`<div><small>${i+1}時間目</small>${schedule[i]||"未入力"}</div>`;preview.append(el)}$("count").textContent=`${schedule.length} / 6`;$("undo").disabled=!schedule.length;$("clear").disabled=!schedule.length}
+function openBoard(){cards.innerHTML="";if(!schedule.length){cards.innerHTML='<div class="empty-board">時間割がまだありません</div>'}schedule.forEach((name,i)=>{const [c1,c2]=colors(name);const card=document.createElement("article");card.className="card";card.style.setProperty("--c1",c1);card.style.setProperty("--c2",c2);card.innerHTML=`<div class="period">${i+1}</div><div class="name">${name}</div>`;cards.append(card)});$("date").textContent=new Intl.DateTimeFormat("ja-JP",{month:"long",day:"numeric",weekday:"long"}).format(new Date());board.classList.add("show");document.body.style.overflow="hidden";requestFullscreen()}
+async function requestFullscreen(){try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen()}catch(e){}}
+function closeBoard(){board.classList.remove("show");document.body.style.overflow="";if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})}
+subjectData.forEach(([name,c1,c2])=>{const b=document.createElement("button");b.type="button";b.className="subject";b.textContent=name;b.style.setProperty("--c1",c1);b.style.setProperty("--c2",c2);b.addEventListener("click",()=>add(name));subjects.append(b)});
+$("addCustom").addEventListener("click",()=>{add($("customName").value);$("customName").value=""});$("customName").addEventListener("keydown",e=>{if(e.key==="Enter")$("addCustom").click()});
+$("undo").addEventListener("click",()=>{schedule.pop();render()});$("clear").addEventListener("click",()=>{schedule.length=0;render()});$("show").addEventListener("click",openBoard);$("edit").addEventListener("click",closeBoard);$("fullscreen").addEventListener("click",requestFullscreen);render();
+</script>
+</body>
+</html>
