@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>番号磁石 進捗ボード</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --border: #d7e0ea;
+      --text: #1f2937;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --warning: #f59e0b;
+      --danger: #dc2626;
+      --green: #16a34a;
+      --shadow: 0 10px 26px rgba(15, 23, 42, 0.10);
+      --magnet-shadow: rgba(31, 41, 55, 0.22);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 28px));
+      margin: 24px auto 44px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
+      border-radius: 24px;
+      color: #fff;
+      padding: clamp(20px, 4vw, 34px);
+      box-shadow: 0 18px 40px rgba(37, 99, 235, 0.20);
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 5vw, 3.3rem);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+    }
+
+    .hero p {
+      margin: 0;
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      opacity: 0.96;
+    }
+
+    .panel {
+      margin-top: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: var(--surface-soft);
+      border-bottom: 1px solid var(--border);
+      font-weight: 900;
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+      align-items: end;
+    }
+
+    .field {
+      grid-column: span 3;
+    }
+
+    .field-wide {
+      grid-column: span 6;
+    }
+
+    label,
+    .label-text {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.92rem;
+      font-weight: 800;
+    }
+
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      min-height: 46px;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    input:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.20);
+      border-color: var(--primary);
+    }
+
+    .mode-buttons,
+    .action-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .mode-buttons {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .action-grid {
+      grid-template-columns: repeat(3, 1fr);
+      margin-top: 16px;
+    }
+
+    .btn {
+      min-height: 48px;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 900;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+      outline: none;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover,
+    .btn-primary:focus-visible {
+      background: var(--primary-dark);
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: #1f2937;
+    }
+
+    .btn-danger-outline {
+      background: #fff;
+      border-color: #fecaca;
+      color: var(--danger);
+    }
+
+    .btn-secondary-outline {
+      background: #fff;
+      border-color: #cbd5e1;
+      color: #334155;
+    }
+
+    .btn-mode {
+      background: #fff;
+      border-color: #bfdbfe;
+      color: var(--primary);
+      border-radius: 999px;
+    }
+
+    .btn-mode.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .steps-settings {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+      background: #fbfdff;
+    }
+
+    .steps-settings.show {
+      display: block;
+    }
+
+    .helper-text {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .stage-name-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .summary-main {
+      margin: 0 0 10px;
+      font-size: clamp(1.1rem, 2vw, 1.35rem);
+      font-weight: 800;
+    }
+
+    .status-text {
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    .history {
+      max-height: 170px;
+      overflow: auto;
+      margin: 0;
+      padding-left: 1.35rem;
+      color: var(--muted);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .stage-column {
+      display: flex;
+      min-height: 260px;
+      flex-direction: column;
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .stage-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--surface-soft);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stage-title {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 900;
+    }
+
+    .stage-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.35rem;
+      height: 2.35rem;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-weight: 900;
+      font-size: 1.1rem;
+    }
+
+    .magnet-zone {
+      display: flex;
+      flex: 1;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 12px;
+      padding: 14px;
+      background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+
+    .magnet-button {
+      width: 64px;
+      height: 64px;
+      border: 0;
+      border-radius: 999px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 1.55rem;
+      font-weight: 950;
+      line-height: 1;
+      box-shadow: 0 7px 0 rgba(0, 0, 0, 0.17), 0 10px 18px var(--magnet-shadow);
+      touch-action: manipulation;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+
+    .magnet-button:hover,
+    .magnet-button:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 9px 0 rgba(0, 0, 0, 0.17), 0 14px 22px var(--magnet-shadow);
+      outline: 3px solid rgba(37, 99, 235, 0.22);
+      outline-offset: 3px;
+    }
+
+    .magnet-button:active {
+      transform: translateY(4px);
+      box-shadow: 0 3px 0 rgba(0, 0, 0, 0.18), 0 6px 10px var(--magnet-shadow);
+    }
+
+    .stage-0 { background: #2563eb; }
+    .stage-1 { background: #f97316; }
+    .stage-2 { background: #9333ea; }
+    .stage-3 { background: #dc2626; }
+    .stage-4 { background: #0891b2; }
+    .stage-5 { background: #7c3aed; }
+    .stage-6 { background: #be123c; }
+    .stage-7 { background: #0f766e; }
+    .done { background: var(--green); }
+
+    .empty-message {
+      width: 100%;
+      margin: auto;
+      padding: 26px 8px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.76);
+      color: var(--muted);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    @media (max-width: 820px) {
+      .field,
+      .field-wide {
+        grid-column: span 12;
+      }
+
+      .action-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        width: min(100% - 18px, 1180px);
+        margin-top: 12px;
+      }
+
+      .mode-buttons {
+        grid-template-columns: 1fr;
+      }
+
+      .magnet-button {
+        width: 58px;
+        height: 58px;
+        font-size: 1.35rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <h1>番号磁石 進捗ボード</h1>
+      <p>番号磁石を黒板で動かすように、活動の進み具合を大きな丸ボタンで見える化できます。</p>
+    </section>
+
+    <section class="panel" aria-labelledby="settingsHeading">
+      <div class="panel-header">
+        <span id="settingsHeading">ボード設定</span>
+      </div>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div class="field">
+            <label for="startNumber">開始番号</label>
+            <input type="number" id="startNumber" value="1" min="1" step="1">
+          </div>
+          <div class="field">
+            <label for="endNumber">終了番号</label>
+            <input type="number" id="endNumber" value="30" min="1" step="1">
+          </div>
+          <div class="field-wide">
+            <span class="label-text">使い方</span>
+            <div class="mode-buttons" role="group" aria-label="使い方の選択">
+              <button type="button" class="btn btn-mode active" id="simpleModeBtn" aria-pressed="true">シンプル版</button>
+              <button type="button" class="btn btn-mode" id="stepsModeBtn" aria-pressed="false">段取り版</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="stepsSettings" class="steps-settings">
+          <div class="form-grid">
+            <div class="field">
+              <label for="stageCount">段取りの数</label>
+              <input type="number" id="stageCount" value="4" min="2" max="8" step="1">
+            </div>
+            <div class="field">
+              <button type="button" class="btn btn-secondary-outline" id="updateStageNamesBtn">名前欄を更新</button>
+            </div>
+            <div class="field-wide helper-text">
+              例：未着手 → 読む → 書く → 提出 のように、活動に合わせて枠名を変えられます。
+            </div>
+          </div>
+          <div id="stageNameInputs" class="stage-name-grid"></div>
+        </div>
+
+        <div class="action-grid">
+          <button type="button" class="btn btn-primary" id="createBoardBtn">ボードを作成</button>
+          <button type="button" class="btn btn-warning" id="undoBtn" disabled>ひとつ戻す</button>
+          <button type="button" class="btn btn-danger-outline" id="resetBtn">全員を最初に戻す</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="summaryHeading">
+      <div class="panel-header">
+        <span id="summaryHeading">現在の状況</span>
+        <span id="statusText" class="status-text">番号と使い方を設定して「ボードを作成」を押してください。</span>
+      </div>
+      <div class="panel-body">
+        <p id="summaryText" class="summary-main">未作成</p>
+        <ol id="historyList" class="history"></ol>
+      </div>
+    </section>
+
+    <section id="boardArea" class="board" aria-live="polite"></section>
+  </main>
+
+  <script>
+    const defaultSimpleStages = ["未完了", "完了"];
+    const defaultStepStages = ["未着手", "準備", "作業中", "提出"];
+    const fallbackStepStages = ["未着手", "準備", "作業中", "確認", "直し", "提出", "返却", "完了"];
+
+    let currentMode = "simple";
+    let boardState = {
+      numbers: [],
+      stages: defaultSimpleStages,
+      positions: new Map(),
+      history: []
+    };
+
+    const startNumberInput = document.getElementById("startNumber");
+    const endNumberInput = document.getElementById("endNumber");
+    const simpleModeBtn = document.getElementById("simpleModeBtn");
+    const stepsModeBtn = document.getElementById("stepsModeBtn");
+    const stepsSettings = document.getElementById("stepsSettings");
+    const stageCountInput = document.getElementById("stageCount");
+    const stageNameInputs = document.getElementById("stageNameInputs");
+    const statusText = document.getElementById("statusText");
+    const summaryText = document.getElementById("summaryText");
+    const historyList = document.getElementById("historyList");
+    const boardArea = document.getElementById("boardArea");
+    const undoBtn = document.getElementById("undoBtn");
+
+    function clampStageCount(value) {
+      const parsed = parseInt(value, 10);
+      if (Number.isNaN(parsed)) return 2;
+      return Math.min(Math.max(parsed, 2), 8);
+    }
+
+    function getStageDefaults(count) {
+      return Array.from({ length: count }, (_, index) => defaultStepStages[index] || fallbackStepStages[index] || `${index + 1}段階目`);
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      const isSteps = mode === "steps";
+      simpleModeBtn.classList.toggle("active", !isSteps);
+      stepsModeBtn.classList.toggle("active", isSteps);
+      simpleModeBtn.setAttribute("aria-pressed", String(!isSteps));
+      stepsModeBtn.setAttribute("aria-pressed", String(isSteps));
+      stepsSettings.classList.toggle("show", isSteps);
+      if (isSteps && stageNameInputs.children.length === 0) {
+        renderStageNameInputs();
+      }
+    }
+
+    function renderStageNameInputs() {
+      const count = clampStageCount(stageCountInput.value);
+      const currentNames = Array.from(stageNameInputs.querySelectorAll("input")).map((input) => input.value.trim());
+      const defaults = getStageDefaults(count);
+      stageCountInput.value = count;
+      stageNameInputs.innerHTML = "";
+
+      for (let index = 0; index < count; index++) {
+        const wrapper = document.createElement("div");
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+
+        label.setAttribute("for", `stageName-${index}`);
+        label.textContent = `${index + 1}枠目`;
+        input.type = "text";
+        input.id = `stageName-${index}`;
+        input.value = currentNames[index] || defaults[index];
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(input);
+        stageNameInputs.appendChild(wrapper);
+      }
+    }
+
+    function getStageNames() {
+      if (currentMode === "simple") return defaultSimpleStages;
+
+      const count = clampStageCount(stageCountInput.value);
+      const defaults = getStageDefaults(count);
+      return Array.from({ length: count }, (_, index) => {
+        const input = document.getElementById(`stageName-${index}`);
+        return (input && input.value.trim()) || defaults[index];
+      });
+    }
+
+    function validateRange(start, end) {
+      if (Number.isNaN(start) || Number.isNaN(end) || start < 1 || end < 1 || start > end) {
+        alert("開始番号と終了番号を正しく入力してください。");
+        return false;
+      }
+
+      if (end - start > 99) {
+        alert("一度に表示できる番号は100個までです。");
+        return false;
+      }
+
+      return true;
+    }
+
+    function createBoard() {
+      const start = parseInt(startNumberInput.value, 10);
+      const end = parseInt(endNumberInput.value, 10);
+      if (!validateRange(start, end)) return;
+
+      const numbers = [];
+      for (let number = start; number <= end; number++) {
+        numbers.push(number);
+      }
+
+      boardState = {
+        numbers,
+        stages: getStageNames(),
+        positions: new Map(numbers.map((number) => [number, 0])),
+        history: []
+      };
+
+      statusText.textContent = `${start}番から${end}番までのボードを作成しました。番号を押すと次の枠へ進みます。`;
+      renderBoard();
+    }
+
+    function moveNumber(number) {
+      const currentStage = boardState.positions.get(number);
+      if (currentStage === undefined) return;
+
+      const nextStage = Math.min(currentStage + 1, boardState.stages.length - 1);
+      if (nextStage === currentStage) {
+        statusText.textContent = `${number}番はすでに「${boardState.stages[currentStage]}」です。`;
+        return;
+      }
+
+      boardState.positions.set(number, nextStage);
+      boardState.history.push({ number, from: currentStage, to: nextStage });
+      statusText.textContent = `${number}番を「${boardState.stages[nextStage]}」へ移動しました。`;
+      renderBoard();
+    }
+
+    function undoLastMove() {
+      const lastMove = boardState.history.pop();
+      if (!lastMove) return;
+
+      boardState.positions.set(lastMove.number, lastMove.from);
+      statusText.textContent = `${lastMove.number}番を「${boardState.stages[lastMove.from]}」へ戻しました。`;
+      renderBoard();
+    }
+
+    function resetBoard() {
+      if (boardState.numbers.length === 0) {
+        statusText.textContent = "まだボードが作成されていません。";
+        return;
+      }
+
+      boardState.numbers.forEach((number) => boardState.positions.set(number, 0));
+      boardState.history = [];
+      statusText.textContent = "全員を最初の枠へ戻しました。";
+      renderBoard();
+    }
+
+    function getNumbersInStage(stageIndex) {
+      return boardState.numbers.filter((number) => boardState.positions.get(number) === stageIndex);
+    }
+
+    function createMagnetButton(number, stageIndex) {
+      const button = document.createElement("button");
+      const isDone = stageIndex === boardState.stages.length - 1;
+
+      button.type = "button";
+      button.className = `magnet-button stage-${stageIndex}${isDone ? " done" : ""}`;
+      button.textContent = number;
+      button.title = isDone ? `${number}番は最終枠です` : `${number}番を次の枠へ進める`;
+      button.setAttribute("aria-label", button.title);
+      button.addEventListener("click", () => moveNumber(number));
+
+      return button;
+    }
+
+    function renderBoard() {
+      boardArea.innerHTML = "";
+
+      boardState.stages.forEach((stageName, stageIndex) => {
+        const column = document.createElement("article");
+        const header = document.createElement("div");
+        const title = document.createElement("h2");
+        const count = document.createElement("span");
+        const zone = document.createElement("div");
+        const numbers = getNumbersInStage(stageIndex);
+
+        column.className = "stage-column";
+        header.className = "stage-header";
+        title.className = "stage-title";
+        title.textContent = stageName;
+        count.className = "stage-count";
+        count.textContent = numbers.length;
+        zone.className = "magnet-zone";
+        zone.setAttribute("aria-label", `${stageName}の番号`);
+
+        if (numbers.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty-message";
+          empty.textContent = "ここにはまだありません";
+          zone.appendChild(empty);
+        } else {
+          numbers.forEach((number) => zone.appendChild(createMagnetButton(number, stageIndex)));
+        }
+
+        header.appendChild(title);
+        header.appendChild(count);
+        column.appendChild(header);
+        column.appendChild(zone);
+        boardArea.appendChild(column);
+      });
+
+      updateSummary();
+    }
+
+    function updateSummary() {
+      if (boardState.numbers.length === 0) {
+        summaryText.textContent = "未作成";
+        undoBtn.disabled = true;
+        historyList.innerHTML = "";
+        return;
+      }
+
+      summaryText.textContent = boardState.stages
+        .map((stageName, index) => `${stageName}: ${getNumbersInStage(index).length}人`)
+        .join(" / ");
+      undoBtn.disabled = boardState.history.length === 0;
+      historyList.innerHTML = "";
+
+      boardState.history.slice(-5).reverse().forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = `${item.number}番: ${boardState.stages[item.from]} → ${boardState.stages[item.to]}`;
+        historyList.appendChild(li);
+      });
+    }
+
+    simpleModeBtn.addEventListener("click", () => setMode("simple"));
+    stepsModeBtn.addEventListener("click", () => setMode("steps"));
+    stageCountInput.addEventListener("change", renderStageNameInputs);
+    document.getElementById("updateStageNamesBtn").addEventListener("click", renderStageNameInputs);
+    document.getElementById("createBoardBtn").addEventListener("click", createBoard);
+    undoBtn.addEventListener("click", undoLastMove);
+    document.getElementById("resetBtn").addEventListener("click", resetBoard);
+
+    renderStageNameInputs();
+    createBoard();
+  </script>
+</body>
+</html>
