@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f3f6fb">
+  <meta name="description" content="授業や学級経営で使う学校向けWebアプリを、ワンタップで開けるホーム画面です。">
+  <title>学校アプリホーム</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #667085;
+      --line: #dbe3ee;
+      --panel: rgba(255, 255, 255, .88);
+      --blue: #3157d5;
+      --violet: #7048ca;
+      --shadow: 0 16px 42px rgba(34, 48, 82, .1);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-height: 100%; }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 5% 0%, rgba(72, 103, 216, .17), transparent 29%),
+        radial-gradient(circle at 96% 9%, rgba(121, 72, 197, .11), transparent 24%),
+        linear-gradient(145deg, #f8faff 0%, #eef3fa 52%, #f8fbff 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; }
+
+    a:focus-visible {
+      outline: 4px solid rgba(49, 87, 213, .24);
+      outline-offset: 3px;
+    }
+
+    [hidden] { display: none !important; }
+
+    .shell {
+      width: min(1240px, calc(100% - 28px));
+      margin: 0 auto;
+      padding:
+        max(22px, env(safe-area-inset-top))
+        max(0px, env(safe-area-inset-right))
+        max(34px, env(safe-area-inset-bottom))
+        max(0px, env(safe-area-inset-left));
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .home-mark {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: repeat(2, 21px);
+      grid-template-rows: repeat(2, 21px);
+      gap: 5px;
+      width: 64px;
+      height: 64px;
+      place-content: center;
+      border: 1px solid rgba(255, 255, 255, .8);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, .8);
+      box-shadow: 0 13px 30px rgba(49, 70, 130, .14), inset 0 1px 0 #fff;
+    }
+
+    .home-mark span { border-radius: 7px; }
+    .home-mark span:nth-child(1) { background: #4d67d8; }
+    .home-mark span:nth-child(2) { background: #8a59c8; }
+    .home-mark span:nth-child(3) { background: #17a27d; }
+    .home-mark span:nth-child(4) { background: #ee8a2d; }
+
+    .eyebrow {
+      margin-bottom: 4px;
+      color: #5868a8;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .13em;
+    }
+
+    h1 {
+      margin: 0;
+      color: #22345f;
+      font-size: clamp(31px, 4.2vw, 52px);
+      font-weight: 950;
+      letter-spacing: .02em;
+      line-height: 1.12;
+    }
+
+    .lead {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: clamp(14px, 1.6vw, 18px);
+      font-weight: 750;
+    }
+
+    .clock-card {
+      min-width: 238px;
+      padding: 15px 18px;
+      border: 1px solid rgba(255, 255, 255, .96);
+      border-radius: 19px;
+      background: rgba(255, 255, 255, .78);
+      box-shadow: 0 12px 30px rgba(34, 48, 82, .09), inset 0 1px 0 #fff;
+      text-align: right;
+      backdrop-filter: blur(12px);
+    }
+
+    .today {
+      color: #68758a;
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .clock {
+      margin-top: 2px;
+      color: #273b6e;
+      font-size: clamp(27px, 3vw, 38px);
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .03em;
+      line-height: 1.1;
+    }
+
+    .recent-link {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      min-height: 62px;
+      margin-bottom: 20px;
+      padding: 9px 14px;
+      border: 1px solid #cbd7f7;
+      border-radius: 17px;
+      color: #334a8c;
+      background: rgba(241, 245, 255, .88);
+      box-shadow: 0 8px 22px rgba(49, 72, 140, .07);
+      text-decoration: none;
+      transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+    }
+
+    .recent-link:hover { transform: translateY(-2px); background: #f7f9ff; box-shadow: 0 12px 26px rgba(49, 72, 140, .11); }
+    .recent-link:active { transform: scale(.99); }
+
+    .recent-icon {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 13px;
+      color: #fff;
+      background: linear-gradient(145deg, #4d68d8, #6c4cc3);
+      font-size: 20px;
+      font-weight: 950;
+    }
+
+    .recent-copy small {
+      display: block;
+      color: #7582a1;
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .recent-copy strong {
+      display: block;
+      overflow: hidden;
+      margin-top: 2px;
+      font-size: 16px;
+      font-weight: 950;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-open {
+      color: #51639a;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .section + .section { margin-top: 28px; }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 3px 12px;
+    }
+
+    .section-title {
+      margin: 0;
+      color: #25355b;
+      font-size: clamp(21px, 2.4vw, 29px);
+      font-weight: 950;
+    }
+
+    .section-note {
+      margin: 3px 0 0;
+      color: #7a8495;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .app-count {
+      flex: 0 0 auto;
+      padding: 7px 11px;
+      border: 1px solid rgba(95, 114, 165, .14);
+      border-radius: 999px;
+      color: #64718b;
+      background: rgba(255, 255, 255, .68);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .featured-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .app-card {
+      --c1: #3157d5;
+      --c2: #7048ca;
+      position: relative;
+      display: flex;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .95);
+      color: var(--ink);
+      background: var(--panel);
+      box-shadow: var(--shadow), inset 0 1px 0 #fff;
+      text-decoration: none;
+      backdrop-filter: blur(12px);
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+
+    .app-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--c1), var(--c2));
+    }
+
+    .app-card::after {
+      content: "";
+      position: absolute;
+      right: -42px;
+      bottom: -53px;
+      width: 126px;
+      height: 126px;
+      border-radius: 50%;
+      background: var(--c1);
+      opacity: .055;
+      pointer-events: none;
+    }
+
+    .app-card:hover {
+      z-index: 2;
+      border-color: rgba(111, 130, 186, .23);
+      box-shadow: 0 20px 45px rgba(34, 48, 82, .15), inset 0 1px 0 #fff;
+      transform: translateY(-4px);
+    }
+
+    .app-card:active { transform: scale(.98); }
+
+    .featured-card {
+      flex-direction: column;
+      min-height: 205px;
+      padding: 22px 20px 18px;
+      border-radius: var(--radius);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .app-icon {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      width: 58px;
+      height: 58px;
+      place-items: center;
+      border-radius: 18px;
+      color: #fff;
+      background: linear-gradient(145deg, var(--c1), var(--c2));
+      box-shadow: 0 11px 22px rgba(38, 52, 90, .16), inset 0 1px 0 rgba(255, 255, 255, .25);
+      font-size: 29px;
+      line-height: 1;
+    }
+
+    .app-tag {
+      padding: 6px 9px;
+      border: 1px solid color-mix(in srgb, var(--c1) 20%, white);
+      border-radius: 999px;
+      color: var(--c1);
+      background: color-mix(in srgb, var(--c1) 8%, white);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .03em;
+    }
+
+    .app-name {
+      position: relative;
+      z-index: 1;
+      margin: 17px 0 0;
+      font-size: clamp(20px, 2vw, 25px);
+      font-weight: 950;
+      line-height: 1.25;
+    }
+
+    .app-description {
+      position: relative;
+      z-index: 1;
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 720;
+      line-height: 1.55;
+    }
+
+    .open-mark {
+      position: absolute;
+      right: 15px;
+      bottom: 14px;
+      z-index: 1;
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--c1);
+      background: color-mix(in srgb, var(--c1) 9%, white);
+      font-size: 18px;
+      font-weight: 950;
+      transition: transform .14s ease;
+    }
+
+    .app-card:hover .open-mark { transform: translateX(3px); }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .tool-card {
+      align-items: center;
+      min-height: 126px;
+      padding: 17px 54px 17px 17px;
+      border-radius: 19px;
+    }
+
+    .tool-card .app-icon {
+      flex: 0 0 auto;
+      width: 52px;
+      height: 52px;
+      margin-right: 14px;
+      border-radius: 16px;
+      font-size: 25px;
+    }
+
+    .tool-copy { min-width: 0; }
+
+    .tool-card .app-name {
+      overflow: hidden;
+      margin: 0;
+      font-size: clamp(17px, 1.6vw, 21px);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tool-card .app-description {
+      display: -webkit-box;
+      overflow: hidden;
+      margin-top: 5px;
+      font-size: 12px;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .tool-card .app-tag {
+      display: inline-flex;
+      margin-top: 7px;
+      padding: 4px 7px;
+    }
+
+    .footer-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 28px 0 0;
+      color: #758093;
+      font-size: 13px;
+      font-weight: 750;
+      text-align: center;
+    }
+
+    .footer-note span {
+      display: grid;
+      width: 25px;
+      height: 25px;
+      place-items: center;
+      border-radius: 8px;
+      color: #53649c;
+      background: #e8edfb;
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    @media (max-width: 1040px) {
+      .featured-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 700px) {
+      .shell { width: min(100% - 18px, 1240px); padding-top: 13px; }
+      .hero { grid-template-columns: 1fr; gap: 12px; }
+      .brand { align-items: flex-start; gap: 12px; }
+      .home-mark { grid-template-columns: repeat(2, 17px); grid-template-rows: repeat(2, 17px); width: 53px; height: 53px; border-radius: 16px; }
+      .home-mark span { border-radius: 5px; }
+      .eyebrow { display: none; }
+      h1 { font-size: clamp(28px, 9vw, 40px); }
+      .clock-card { display: flex; align-items: center; justify-content: space-between; min-width: 0; padding: 11px 14px; text-align: left; }
+      .clock { margin: 0; font-size: 26px; }
+      .featured-grid, .tools-grid { grid-template-columns: 1fr; }
+      .featured-card { min-height: 188px; }
+      .tool-card { min-height: 112px; }
+      .section + .section { margin-top: 24px; }
+      .section-head { align-items: center; }
+      .section-note { display: none; }
+      .recent-open { display: none; }
+    }
+
+    @media (max-width: 390px) {
+      .app-count { display: none; }
+      .featured-card { padding: 19px 17px 16px; }
+      .app-description { padding-right: 24px; }
+      .tool-card { padding-left: 13px; }
+      .tool-card .app-icon { margin-right: 11px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="brand">
+        <div class="home-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <div>
+          <div class="eyebrow">SCHOOL APP HOME</div>
+          <h1>学校アプリホーム</h1>
+          <p class="lead">授業や学級経営のツールを、ここからワンタップで開けます</p>
+        </div>
+      </div>
+      <div class="clock-card" aria-label="今日の日付と時刻">
+        <div class="today" id="today"></div>
+        <div class="clock" id="clock"></div>
+      </div>
+    </header>
+
+    <a class="recent-link" id="recentLink" href="#" hidden>
+      <span class="recent-icon" aria-hidden="true">↺</span>
+      <span class="recent-copy"><small>前回使ったアプリ</small><strong id="recentName"></strong></span>
+      <span class="recent-open">もう一度開く →</span>
+    </a>
+
+    <section class="section" aria-labelledby="dailyHeading">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title" id="dailyHeading">よく使うアプリ</h2>
+          <p class="section-note">毎日の授業と学級生活ですぐに使える4つです</p>
+        </div>
+        <span class="app-count">4 APP</span>
+      </div>
+
+      <div class="featured-grid">
+        <a class="app-card featured-card" href="./timetable.html" data-app-id="timetable" data-app-name="今日の時間割" style="--c1:#405fd0;--c2:#7952c7">
+          <span class="card-top"><span class="app-icon" aria-hidden="true">📅</span><span class="app-tag">毎日の表示</span></span>
+          <span class="app-name">今日の時間割</span>
+          <span class="app-description">教科を順に押して、今日の時間割を教室に大きく表示します。</span>
+          <span class="open-mark" aria-hidden="true">→</span>
+        </a>
+
+        <a class="app-card featured-card" href="./school-timer.html" data-app-id="school-timer" data-app-name="学校タイマー" style="--c1:#2875d7;--c2:#08a18c">
+          <span class="card-top"><span class="app-icon" aria-hidden="true">⏱</span><span class="app-tag">授業</span></span>
+          <span class="app-name">学校タイマー</span>
+          <span class="app-description">授業や活動の残り時間を、教室の後ろからも見やすく表示します。</span>
+          <span class="open-mark" aria-hidden="true">→</span>
+        </a>
+
+        <a class="app-card featured-card" href="./index.html" data-app-id="lunch-timer" data-app-name="給食当番 準備タイマー" style="--c1:#ec751e;--c2:#1da05f">
+          <span class="card-top"><span class="app-icon" aria-hidden="true">🥗</span><span class="app-tag">給食</span></span>
+          <span class="app-name">給食当番 準備タイマー</span>
+          <span class="app-description">係ごとの準備完了を確認しながら、給食準備の時間を管理します。</span>
+          <span class="open-mark" aria-hidden="true">→</span>
+        </a>
+
+        <a class="app-card featured-card" href="./roulette.html" data-app-id="roulette" data-app-name="ルーレット" style="--c1:#da4b8b;--c2:#ed7b32">
+          <span class="card-top"><span class="app-icon" aria-hidden="true">🎯</span><span class="app-tag">ランダム</span></span>
+          <span class="app-name">ルーレット</span>
+          <span class="app-description">名前やお題を登録して、タップひとつでランダムに決められます。</span>
+          <span class="open-mark" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="toolsHeading">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title" id="toolsHeading">そのほかのアプリ</h2>
+          <p class="section-note">授業、学級づくり、体育・行事の便利ツールです</p>
+        </div>
+        <span class="app-count">6 APP</span>
+      </div>
+
+      <div class="tools-grid">
+        <a class="app-card tool-card" href="./quiz.html" data-app-id="quiz" data-app-name="わいわい4択クイズ" style="--c1:#6b4fd0;--c2:#d04f9b">
+          <span class="app-icon" aria-hidden="true">？</span>
+          <span class="tool-copy"><span class="app-name">わいわい4択クイズ</span><span class="app-description">文章や画像の問題を作り、電子黒板で4択クイズを出題。</span><span class="app-tag">授業</span></span>
+          <span class="open-mark" aria-hidden="true">→</span>
+        </a>
+
+        <a class="app-card tool-card" href="./flash-anzan.html" data-app-id="flash-anzan" data-app-name="わくわくフラッシュ計算" style="--c1:#167fbd;--c2:#22a879">
+          <span class="app-icon" aria-hidden="true">＋</span>
+          <span class="tool-copy"><span class="app-name">わくわくフラッシュ計算</span><span class="app-description">四則計算や九九をテンポよく出題するウォーミングアップ。</span><span class="app-tag">算数</span></span>
+          <span class="open-mark" aria-hidden="true">→</span>
+        </a>
+
+        <a class="app-card tool-card" href="./seating.html" data-app-id="seating" data-app-name="自動席替えメーカー" style="--c1:#2c67d6;--c2:#d34d99">
+          <span class="app-icon" aria-hidden="true">🪑</span>
+          <span class="tool-copy"><span class="app-name">自動席替えメーカー</span><span class="app-description">名前と教室の列・行を入力して、座席表をランダム作成。</span><span class="app-tag">学級づくり</span></span>
+          <span class="open-mark" aria-hidden="true">→</span>
+        </a>
+
+        <a class="app-card tool-card" href="./group.html" data-app-id="group" data-app-name="ランダムグループ分け" style="--c1:#2470cf;--c2:#13a77c">
+          <span class="app-icon" aria-hidden="true">👥</span>
+          <span class="tool-copy"><span class="app-name">ランダムグループ分け</span><span class="app-description">番号の範囲と班数を選び、人数差の少ないグループを作成。</span><span class="app-tag">学級づくり</span></span>
+          <span class="open-mark" aria-hidden="true">→</span>
+        </a>
+
+        <a class="app-card tool-card" href="./match-scheduler.html" data-app-id="match-scheduler" data-app-name="総当たり対戦順メーカー" style="--c1:#15805b;--c2:#ea812a">
+          <span class="app-icon" aria-hidden="true">🏟</span>
+          <span class="tool-copy"><span class="app-name">総当たり対戦順メーカー</span><span class="app-description">休憩の偏りを抑えた試合順を、チーム数から自動作成。</span><span class="app-tag">体育</span></span>
+          <span class="open-mark" aria-hidden="true">→</span>
+        </a>
+
+        <a class="app-card tool-card" href="./shikijidai-timer/index.html" data-app-id="ceremony-timer" data-app-name="式次第タイマー" style="--c1:#485f9e;--c2:#178b82">
+          <span class="app-icon" aria-hidden="true">📋</span>
+          <span class="tool-copy"><span class="app-name">式次第タイマー</span><span class="app-description">式や行事の各項目について、開始・終了・所要時間を記録。</span><span class="app-tag">行事</span></span>
+          <span class="open-mark" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </section>
+
+    <p class="footer-note"><span aria-hidden="true">★</span>このページをブックマークしておくと、いつでもここから開けます</p>
+  </main>
+
+  <script>
+    const RECENT_KEY = "schoolAppHome.recent.v1";
+    const appLinks = [...document.querySelectorAll("[data-app-id]")];
+    const appMap = new Map(appLinks.map(link => [link.dataset.appId, link]));
+    const recentLink = document.getElementById("recentLink");
+    const recentName = document.getElementById("recentName");
+
+    function saveRecent(link) {
+      const recent = {
+        id: link.dataset.appId,
+        name: link.dataset.appName,
+        href: link.getAttribute("href")
+      };
+      try {
+        localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
+      } catch (error) {
+        // Navigation still works when browser storage is unavailable.
+      }
+    }
+
+    function showRecent() {
+      try {
+        const recent = JSON.parse(localStorage.getItem(RECENT_KEY));
+        const knownApp = recent && appMap.get(recent.id);
+        if (!knownApp) return;
+        recentLink.href = knownApp.getAttribute("href");
+        recentLink.dataset.appId = knownApp.dataset.appId;
+        recentLink.dataset.appName = knownApp.dataset.appName;
+        recentName.textContent = knownApp.dataset.appName;
+        recentLink.hidden = false;
+      } catch (error) {
+        recentLink.hidden = true;
+      }
+    }
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("today").textContent = new Intl.DateTimeFormat("ja-JP", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        weekday: "short"
+      }).format(now);
+      document.getElementById("clock").textContent = new Intl.DateTimeFormat("ja-JP", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      }).format(now);
+    }
+
+    appLinks.forEach(link => link.addEventListener("click", () => saveRecent(link)));
+    recentLink.addEventListener("click", () => {
+      const source = appMap.get(recentLink.dataset.appId);
+      if (source) saveRecent(source);
+    });
+
+    showRecent();
+    updateClock();
+    window.setInterval(updateClock, 30000);
+  </script>
+</body>
+</html>
