@@ -761,6 +761,9 @@
         var(--accent-soft);
     }
 
+    .tools-grid .tool-card:nth-last-child(2),
+    .tools-grid .tool-card:last-child { grid-column: span 3; }
+
     .tool-top {
       display: flex;
       align-items: flex-start;
@@ -1024,7 +1027,10 @@
       .featured-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .featured-card:first-child { grid-column: 1 / -1; min-height: 250px; }
       .tools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .tool-card { grid-column: auto; }
+      .tool-card,
+      .tools-grid .tool-card:nth-last-child(2),
+      .tools-grid .tool-card:last-child { grid-column: auto; }
+      .tools-grid .tool-card:last-child { grid-column: 1 / -1; }
     }
 
     @media (max-width: 820px) {
@@ -1192,7 +1198,7 @@
             <span class="section-number" aria-hidden="true">02</span>
             <div><h2 class="section-title" id="toolsHeading">便利ツール</h2><p class="section-note">授業・学級づくり・体育や行事で使えます</p></div>
           </div>
-          <span class="app-count">6 APPS</span>
+          <span class="app-count">5 APPS</span>
         </div>
 
         <div class="tools-grid">
@@ -1221,10 +1227,6 @@
             <span class="app-name">式次第タイマー</span><span class="app-description">式や行事の各項目について、開始・終了・所要時間を記録。</span><span class="tool-footer"><span>開く&nbsp; →</span></span>
           </a>
 
-          <a class="app-card tool-card" href="https://flash-card-maker.ryo-ta.chatgpt.site" data-app-id="flash-card-maker" data-app-name="フラッシュカードメーカー" style="--accent:#2878d0;--accent-dark:#185eae;--accent-soft:#edf6ff">
-            <span class="tool-top"><span class="app-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="14" height="15" rx="2"/><path d="M8 6V3h12v15h-2M8 11h6M8 15h4"/></svg></span><span class="tool-index">TOOL 06</span></span>
-            <span class="app-name">フラッシュカードメーカー</span><span class="app-description">教科別パッケージから選ぶか、自分でカードを作って大きく提示。</span><span class="tool-footer"><span>開く&nbsp; →</span></span>
-          </a>
         </div>
       </section>
 
