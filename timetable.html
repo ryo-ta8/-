@@ -33,10 +33,10 @@
 const subjectData=[
   ["国語","#e85663","#bd3450"],["算数","#3b82e6","#2459bc"],["理科","#14a66f","#087a55"],["社会","#e99027","#c46713"],
   ["外国語","#7b55df","#5731b6"],["音楽","#d84fa4","#aa307a"],["図工","#f06b3f","#d04428"],["体育","#12a6b5","#087b91"],
-  ["道徳","#7a879a","#536174"],["学活","#5870c7","#394fa6"],["総合","#16a085","#0b7462"],["その他","#9a6b45","#70482b"]
+  ["家庭科","#b66b43","#895035"],["道徳","#7a879a","#536174"],["学活","#5870c7","#394fa6"],["総合","#16a085","#0b7462"],["その他","#9a6b45","#70482b"]
 ];
 const schedule=[];const $=id=>document.getElementById(id);const subjects=$("subjects"),preview=$("preview"),cards=$("cards"),board=$("board");
-const icons={"国語":"📖","算数":"✏️","理科":"🔬","社会":"🌏","外国語":"💬","音楽":"🎵","図工":"🎨","体育":"🏃","道徳":"🤝","学活":"🏫","総合":"💡","その他":"＋"};
+const icons={"国語":"📖","算数":"✏️","理科":"🔬","社会":"🌏","外国語":"💬","音楽":"🎵","図工":"🎨","体育":"🏃","家庭科":"🧵","道徳":"🤝","学活":"🏫","総合":"💡","その他":"＋"};
 function textSafe(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function colors(name){return subjectData.find(x=>x[0]===name)?.slice(1)||["#59677c","#384558"]}
 function add(name){name=name.trim();if(!name||schedule.length>=6)return;schedule.push(name);render();if(schedule.length===6)openBoard()}
