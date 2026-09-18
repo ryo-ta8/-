@@ -16,18 +16,71 @@
     @media(max-width:430px){.eyebrow{display:none}.app{padding-top:12px}.subjects{gap:8px;padding:10px}.subject{gap:5px;min-height:68px}.subject-icon{font-size:.92em}.period:after{display:none}.name{gap:7px}.card-icon{font-size:.58em}}
   </style>
 <link rel="stylesheet" href="./classroom.css?v=20260905">
+<style>
+/* Keep this layout local to the timetable; other classroom apps share classroom.css. */
+body[data-tool="timetable"] .top { flex-wrap:wrap; }
+body[data-tool="timetable"] .top>div:first-child { flex:1 1 12rem; min-width:0; }
+body[data-tool="timetable"] .count { flex-shrink:0; font-variant-numeric:tabular-nums; }
+body[data-tool="timetable"] .preview { grid-template-columns:repeat(6,minmax(0,1fr)); }
+body[data-tool="timetable"] .subjects { grid-template-columns:repeat(4,minmax(0,1fr)); }
+body[data-tool="timetable"] :is(.slot,.subject,.action) { min-width:0; overflow-wrap:anywhere; }
+body[data-tool="timetable"] .slot { overflow:visible; }
+body[data-tool="timetable"] .slot small { font-size:.875rem; }
+body[data-tool="timetable"] .subject { padding:.5rem; font-size:clamp(1rem,2.7vw,1.875rem); }
+body[data-tool="timetable"] .custom.show { flex-wrap:wrap; }
+body[data-tool="timetable"] .custom input { flex:1 1 10rem; min-width:0; }
+body[data-tool="timetable"] .custom button { flex:1 1 5rem; min-height:44px; }
+body[data-tool="timetable"] .board {
+  --board-space:clamp(4px,1vmin,12px);
+  padding:max(var(--board-space),env(safe-area-inset-top)) max(var(--board-space),env(safe-area-inset-right)) max(var(--board-space),env(safe-area-inset-bottom)) max(var(--board-space),env(safe-area-inset-left));
+  gap:var(--board-space); overflow:auto; border-radius:0;
+}
+body[data-tool="timetable"] .board-head { min-width:0; gap:4px 8px; padding:0; }
+body[data-tool="timetable"] .board.show { grid-template-rows:auto minmax(3.25rem,1fr); }
+body[data-tool="timetable"] .board-head>div:first-child { flex:1 1 auto; min-width:0; }
+body[data-tool="timetable"] .board-title { font-size:clamp(1.125rem,min(3.7vw,5vh),3rem); line-height:1.25; overflow-wrap:anywhere; }
+body[data-tool="timetable"] .date { font-size:clamp(.875rem,1.7vw,1.3125rem); line-height:1.4; }
+body[data-tool="timetable"] .board-controls { flex-wrap:wrap; gap:4px; max-width:100%; }
+body[data-tool="timetable"] .board-controls button { display:block; min-width:44px; min-height:44px; max-width:100%; padding:6px clamp(6px,1.5vw,24px); font-size:clamp(.875rem,1.7vw,1.3125rem); line-height:1.25; overflow-wrap:anywhere; }
+body[data-tool="timetable"] .cards {
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:repeat(6,minmax(var(--row-min-height,1.5rem),1fr));
+  gap:clamp(2px,.8vh,9px); min-width:0; min-height:0;
+  overflow:auto; overscroll-behavior:contain;
+}
+body[data-tool="timetable"] .card { grid-template-columns:clamp(2rem,10vw,8.125rem) minmax(0,1fr); min-width:0; }
+body[data-tool="timetable"] .period { display:flex; flex-direction:column; justify-content:center; align-items:center; font-size:1rem; line-height:1.1; font-variant-numeric:tabular-nums; }
+body[data-tool="timetable"] .period::after { display:block; margin:3px 0 0; font-size:.75rem; line-height:1.2; }
+body[data-tool="timetable"] .compact-row .period::after { display:none; }
+body[data-tool="timetable"] .name { padding:1px clamp(4px,1.5vw,14px); gap:0; font-size:1rem; line-height:1.2; }
+body[data-tool="timetable"] .name>span:last-child { overflow-wrap:anywhere; line-height:1.2; }
+body[data-tool="timetable"] .empty-board { grid-row:1/-1; min-width:0; text-align:center; font-size:clamp(1rem,4vw,3rem); overflow-wrap:anywhere; }
+@media(max-width:760px) {
+  body[data-tool="timetable"] .preview { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  body[data-tool="timetable"] .subjects { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media(max-width:340px) {
+  body[data-tool="timetable"] .subjects { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:240px) {
+  body[data-tool="timetable"] .preview { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-height:400px) {
+  body[data-tool="timetable"] .board-head>div:first-child { display:flex; flex-wrap:wrap; align-items:baseline; gap:0 8px; }
+}
+</style>
 </head>
 <body data-tool="timetable">
 <main class="app">
   <header class="top"><div><div class="eyebrow">✦ TODAY'S SCHEDULE</div><h1>今日の時間割</h1><p class="sub">教科を、時間割の順に押してください</p></div><div class="count" id="count">0 / 6</div></header>
   <section class="preview panel" id="preview" aria-label="入力中の時間割"></section>
   <section class="subjects panel" id="subjects" aria-label="教科を選ぶ"></section>
-  <div class="custom"><input id="customName" maxlength="8" placeholder="その他の教科・行事"><button id="addCustom" type="button">追加</button></div>
+  <div class="custom"><input id="customName" maxlength="8" placeholder="その他の教科・行事" aria-label="その他の教科・行事"><button id="addCustom" type="button">追加</button></div>
   <div class="actions"><button class="action" id="undo" type="button">1つ戻す</button><button class="action" id="clear" type="button">全部消す</button><button class="action primary" id="show" type="button">時間割を表示</button></div>
 </main>
-<section class="board" id="board" aria-label="今日の時間割 全画面表示">
+<section class="board" id="board" aria-label="今日の時間割 提示画面">
   <header class="board-head"><div><h2 class="board-title">今日の時間割</h2><div class="date" id="date"></div></div><div class="board-controls"><button class="fullscreen-btn" id="fullscreen" type="button">全画面</button><button class="back-btn" id="edit" type="button">← 入力に戻る</button></div></header>
-  <div class="cards" id="cards"></div>
+  <div class="cards" id="cards" tabindex="0" aria-label="時間割一覧"></div>
 </section>
 <script>
 const subjectData=[
@@ -42,6 +95,43 @@ function colors(name){return subjectData.find(x=>x[0]===name)?.slice(1)||["#5967
 function add(name){name=name.trim();if(!name||schedule.length>=6)return;schedule.push(name);render();if(schedule.length===6)openBoard()}
 function render(){preview.innerHTML="";for(let i=0;i<6;i++){const el=document.createElement("div");el.className="slot"+(schedule[i]?" filled":"");el.innerHTML=`<div><small>${i+1}時間目</small>${textSafe(schedule[i]||"未入力")}</div>`;preview.append(el)}$("count").textContent=`${schedule.length} / 6`;$("undo").disabled=!schedule.length;$("clear").disabled=!schedule.length}
 function openBoard(){cards.innerHTML="";if(!schedule.length){cards.innerHTML='<div class="empty-board">時間割がまだありません</div>'}schedule.forEach((name,i)=>{const [c1,c2]=colors(name);const card=document.createElement("article");card.className="card";card.style.setProperty("--c1",c1);card.style.setProperty("--c2",c2);card.innerHTML=`<div class="period">${i+1}</div><div class="name"><span class="card-icon">${icons[name]||"✦"}</span><span>${textSafe(name)}</span></div>`;cards.append(card)});$("date").textContent=new Intl.DateTimeFormat("ja-JP",{month:"long",day:"numeric",weekday:"long"}).format(new Date());board.classList.add("show");document.body.style.overflow="hidden"}
+// Fit to the actual row size, including the header, safe areas and text enlargement.
+// Keep a readable minimum; when it cannot fit, scroll the list instead of clipping text.
+let boardFitFrame=0;
+function queueBoardFit(){cancelAnimationFrame(boardFitFrame);boardFitFrame=requestAnimationFrame(fitBoard)}
+function fitBoard(){
+  if(!board.classList.contains("show"))return;
+  const base=parseFloat(getComputedStyle(document.documentElement).fontSize)||16;
+  const rows=Array.from(cards.querySelectorAll(".card"));
+  const measurements=rows.map(card=>{
+    const name=card.querySelector(".name"),label=name.lastElementChild;
+    name.style.fontSize=base+"px";
+    label.style.whiteSpace="nowrap";
+    const naturalWidth=label.scrollWidth;
+    label.style.whiteSpace="";
+    const style=getComputedStyle(name);
+    const paddingY=parseFloat(style.paddingTop)+parseFloat(style.paddingBottom);
+    const paddingX=parseFloat(style.paddingLeft)+parseFloat(style.paddingRight);
+    return {card,name,label,naturalWidth,paddingY,paddingX,minHeight:label.getBoundingClientRect().height+paddingY+2};
+  });
+  cards.style.setProperty("--row-min-height",Math.ceil(Math.max(base*1.5,...measurements.map(row=>row.minHeight)))+"px");
+  for(const {card,name,label,naturalWidth,paddingY,paddingX} of measurements){
+    const width=Math.max(1,name.clientWidth-paddingX-2);
+    const height=Math.max(1,card.clientHeight-paddingY-2);
+    const size=Math.max(base,Math.min(base*3.625,height/1.2,base*width/Math.max(1,naturalWidth)));
+    name.style.fontSize=(Math.floor(size*4)/4)+"px";
+    // Rounding and fallback fonts can vary by device; retain the readable floor.
+    if(label.scrollHeight>height+1||label.scrollWidth>width+2)name.style.fontSize=Math.max(base,size-1)+"px";
+    card.classList.toggle("compact-row",card.clientHeight<base*3.5);
+    card.querySelector(".period").style.fontSize=Math.max(base,Math.min(base*2.75,card.clientHeight*.55))+"px";
+  }
+}
+const boardResizeObserver=new ResizeObserver(queueBoardFit);
+[board,cards,board.querySelector(".board-head")].forEach(el=>boardResizeObserver.observe(el));
+new MutationObserver(queueBoardFit).observe(cards,{childList:true});
+window.addEventListener("resize",queueBoardFit);
+document.addEventListener("fullscreenchange",queueBoardFit);
+if(document.fonts)document.fonts.ready.then(queueBoardFit);
 async function requestFullscreen(){try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen()}catch(e){}}
 function closeBoard(){board.classList.remove("show");document.body.style.overflow="";if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})}
 subjectData.forEach(([name,c1,c2])=>{const b=document.createElement("button");b.type="button";b.className="subject";b.innerHTML=`<span class="subject-icon">${icons[name]}</span><span>${name}</span>`;b.style.setProperty("--c1",c1);b.style.setProperty("--c2",c2);b.addEventListener("click",()=>{if(name==="その他"){document.querySelector(".custom").classList.add("show");$("customName").focus();$("customName").scrollIntoView({behavior:"smooth",block:"center"})}else add(name)});subjects.append(b)});
@@ -50,4 +140,3 @@ $("undo").addEventListener("click",()=>{schedule.pop();render()});$("clear").add
 </script>
 </body>
 </html>
-
