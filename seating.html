@@ -18,6 +18,7 @@ html.board-focus-root{height:100%;overflow:hidden;scroll-behavior:auto}body.boar
 @media(max-height:480px){.board-focus .board-head{padding:2px 8px}.board-focus .board-head h2{font-size:.875rem}.board-focus .adjust-tools{padding:2px 8px;flex-wrap:nowrap}.board-focus .adjust-status{width:auto;font-size:.7rem;line-height:1.2;flex:1}.board-focus .adjust-controls{flex-wrap:nowrap;gap:4px;flex:none}.board-focus .adjust-controls button{font-size:.75rem;padding:.25rem .4rem}.board-focus .board-scroll{padding:2px 5px}.board-focus .front{font-size:.65rem;line-height:1.1;padding:2px;margin-bottom:2px}.board-focus .legend{font-size:.65rem;padding:0 8px 2px}.board-focus .seat-grid{grid-template-rows:12px repeat(var(--rows),minmax(0,1fr));gap:2px}.board-focus .action-bar{padding-top:2px;padding-bottom:max(2px,env(safe-area-inset-bottom))}.board-focus .action-bar #checkBtn{display:none}.board-focus .board-actions button{font-size:.75rem;padding:.25rem .45rem}}
 @media print{html.board-focus-root{height:auto;overflow:visible}body.board-focus{position:static;display:block;width:auto;height:auto;overflow:visible}.header,.file-status,.editor,.action-bar,.notice,.board-actions,.adjust-tools,.scroll-hint,.legend{display:none!important}.app,.board-focus .app{display:block;padding:0;width:100%;height:auto;max-width:none}.workspace,.board-focus .workspace{display:block}.board-side,.board-focus .board-side{position:static;height:auto}.board-panel,.board-focus .board-panel{display:block;height:auto;border:0}.board-scroll,.board-focus .board-scroll{display:block;overflow:visible;max-height:none!important;padding:12px 0}.classroom,.board-focus .classroom{display:block;height:auto;min-width:0}.seat-grid,.board-focus .seat-grid{grid-template-columns:24px repeat(var(--cols),minmax(0,1fr));grid-template-rows:auto;gap:6px}.seat-button,.board-focus .seat-button{height:auto;min-height:65px;padding:8px 5px;outline:none!important}.seat-button .person-label,.board-focus .seat-button .person-label{font-size:16pt!important}.board-head,.board-focus .board-head{padding:0 0 10px}.front,.board-focus .front{margin:0 auto 14px;padding:8px 12px;font-size:1rem;background:#fff;color:#252d28;border:2px solid #24523f}}
 
+.seat-button.vacant-seat,.seat-button.vacant-seat.readonly:hover{background:#eef1ee;border:1px dashed #a4ada6;color:#69746c}.vacant-seat .person-label{white-space:nowrap;overflow-wrap:normal}#editVacancies[aria-pressed=true]{background:#eaf2ed;border-color:#24523f}.help.danger{color:#a43230}
 </style>
 </head>
 <body>
@@ -39,7 +40,8 @@ html.board-focus-root{height:100%;overflow:hidden;scroll-behavior:auto}body.boar
    </section>
    <section id="panel-seats" class="tab-panel" role="tabpanel" aria-labelledby="tab-seats" hidden>
     <div class="section"><h2>座席の形</h2><div class="inline"><div class="field"><label for="columns">横の席数（縦列）</label><input id="columns" type="number" min="1" max="12" value="6"></div><div class="field"><label for="rows">前からの行数</label><input id="rows" type="number" min="1" max="12" value="5"></div></div><p class="help">黒板に向かって、左端が1列・最前列が1行です。人数より多い席は空席になります。</p></div>
-    <div class="section"><h2>席に入れる性別</h2><p class="help">種類を選び、座席表の席をタップして指定します。</p><div class="palette" aria-label="座席に設定する性別"><button data-paint="m" aria-pressed="true">男子のみ</button><button data-paint="f" aria-pressed="false">女子のみ</button><button data-paint="any" aria-pressed="false">指定なし</button></div><p class="help">性別が未設定の児童は「指定なし」の席だけに入ります。指定席も、人数に余裕があれば空席になれます。</p><button id="clearSeatRules">席の性別指定を解除</button><button id="jumpBoard" class="quiet">座席表へ</button></div>
+    <div class="section"><h2>空席の位置</h2><div class="field"><label for="vacancyMode">余る席の置き方</label><select id="vacancyMode"><option value="back-right">後ろから・右側を空席にする</option><option value="back-left">後ろから・左側を空席にする</option><option value="manual">座席図で空席の場所を指定する</option></select></div><p id="vacancySummary" class="help" role="status"></p><button id="editVacancies" aria-pressed="false">座席図で空席を選ぶ</button><p class="help">初期設定は後ろ・右側です。例：横6席×6行に33人なら、最後列の右3席が空席です。机がない場所も空席に指定できます。空席指定の場所には、手動調整でも児童を置けません。</p></div>
+    <div class="section"><h2>席に入れる性別</h2><p class="help">種類を選び、座席表の席をタップして指定します。</p><div class="palette" aria-label="座席に設定する性別"><button data-paint="m" aria-pressed="true">男子のみ</button><button data-paint="f" aria-pressed="false">女子のみ</button><button data-paint="any" aria-pressed="false">指定なし</button></div><p class="help">性別が未設定の児童は「指定なし」の席だけに入ります。空席指定の場所には、性別にかかわらず配置しません。</p><button id="clearSeatRules">席の性別指定を解除</button><button id="jumpBoard" class="quiet">座席表へ</button></div>
     <h2>児童ごとの場所</h2><p class="help">「名簿」の各児童にある「場所の条件」から、前方・縦列の範囲・固定席を設定できます。</p><button id="goRoster">名簿で設定する</button>
    </section>
    <section id="panel-pairs" class="tab-panel" role="tabpanel" aria-labelledby="tab-pairs" hidden>
@@ -63,6 +65,17 @@ function createSeatingEngine() {
   const position=(i,cols)=>({r:Math.floor(i/cols)+1,c:i%cols+1});
   const distance=(a,b,cols)=>{const x=position(a,cols),y=position(b,cols);return Math.max(Math.abs(x.r-y.r),Math.abs(x.c-y.c));};
   const seatText=(r,c)=>`前から${r}行・左から${c}列`;
+  function vacancies(data) {
+    if(data.vacancyMode==='manual')return (data.emptySeats||[]).map(q=>({r:q.r,c:q.c}));
+    const result=[],occupied=Math.min(data.students.length,data.rows*data.columns);
+    for(let i=occupied;i<data.rows*data.columns;i++){const q=position(i,data.columns);if(data.vacancyMode==='back-left')q.c=data.columns-q.c+1;result.push(q);}
+    return result;
+  }
+  function vacancyProblems(data) {
+    const needed=Math.max(0,data.rows*data.columns-data.students.length),seats=vacancies(data);
+    if(data.vacancyMode==='manual'&&seats.length!==needed)return [`${data.students.length}人・${data.rows*data.columns}席なので、空席の指定は${needed}席必要です。現在は${seats.length}席です。`,`「座席条件」の空席指定を${needed}席にするか、「後ろから」の設定を選んでください。`];
+    return [];
+  }
   function cleanData(raw) {
     if(!raw||typeof raw!=='object'||!integer(raw.rows,1,12)||!integer(raw.columns,1,12))throw Error('座席の行数・列数は1〜12の整数にしてください。');
     if(!Array.isArray(raw.students)||raw.students.length>144)throw Error('名簿は144人までです。');
@@ -84,7 +97,12 @@ function createSeatingEngine() {
     const pairIds=new Set();
     const pairs=raw.pairs.map(p=>{if(!p||typeof p.id!=='string'||!p.id||p.id.length>80||pairIds.has(p.id)||!ids.has(p.a)||!ids.has(p.b)||p.a===p.b||!integer(p.distance,1,12))throw Error('離す組の児童・距離の指定が不正です。');pairIds.add(p.id);return {id:p.id,a:p.a,b:p.b,distance:p.distance};});
     let assignment=null;if(raw.assignment!==null){if(!Array.isArray(raw.assignment)||raw.assignment.length!==raw.rows*raw.columns||raw.assignment.some(x=>x!==null&&typeof x!=='string'))throw Error('保存された座席表の形式が不正です。');assignment=[...raw.assignment];}
-    return {rows:raw.rows,columns:raw.columns,students,seatRules,pairs,assignment};
+    const vacancyMode=raw.vacancyMode??'back-right';
+    if(!['back-right','back-left','manual'].includes(vacancyMode))throw Error('空席の配置方法が不正です。');
+    const emptyKeys=new Set(),emptyRaw=raw.emptySeats??[];
+    if(!Array.isArray(emptyRaw)||emptyRaw.length>144)throw Error('空席の指定が不正です。');
+    const emptySeats=emptyRaw.map(q=>{if(!q||!integer(q.r,1,12)||!integer(q.c,1,12)||emptyKeys.has(`${q.r},${q.c}`))throw Error('空席の指定が不正、または重複しています。');emptyKeys.add(`${q.r},${q.c}`);return {r:q.r,c:q.c};});
+    return {rows:raw.rows,columns:raw.columns,students,seatRules,pairs,assignment,vacancyMode,emptySeats};
   }
   function constraints(data) {
     const cs=[];const name=id=>data.students.find(p=>p.id===id)?.label||id;
@@ -95,15 +113,17 @@ function createSeatingEngine() {
     });
     data.seatRules.forEach(q=>cs.push({kind:'gender',...q,label:`${seatText(q.r,q.c)}は${q.gender==='m'?'男子':'女子'}のみ` }));
     data.pairs.forEach(p=>cs.push({kind:'pair',...p,label:`「${name(p.a)}」と「${name(p.b)}」を${p.distance}席以上離す`}));
+    vacancies(data).forEach(q=>cs.push({kind:'empty',...q,label:`${seatText(q.r,q.c)}は空席（使用しない席）`}));
     return cs;
   }
   function build(data,cs) {
     const total=data.rows*data.columns,idx=new Map(data.students.map((p,i)=>[p.id,i]));
     const domains=data.students.map(()=>Array.from({length:total},(_,i)=>i));
-    const pairs=[];const outside=cs.filter(c=>['gender','fixed'].includes(c.kind)&&(c.r>data.rows||c.c>data.columns));
+    const pairs=[];const outside=cs.filter(c=>['gender','fixed','empty'].includes(c.kind)&&(c.r>data.rows||c.c>data.columns));
     if(outside.length)return {error:['教室の範囲外の席が指定されています。座席の形か、次の指定を直してください。',...outside.map(x=>x.label)]};
     cs.forEach(c=>{
       if(c.kind==='pair'){pairs.push({a:idx.get(c.a),b:idx.get(c.b),distance:c.distance,label:c.label});return;}
+      if(c.kind==='empty'){const seat=(c.r-1)*data.columns+c.c-1;domains.forEach((d,i)=>domains[i]=d.filter(s=>s!==seat));return;}
       if(c.kind==='gender'){const seat=(c.r-1)*data.columns+c.c-1;data.students.forEach((p,i)=>{if(p.gender!==c.gender)domains[i]=domains[i].filter(x=>x!==seat);});return;}
       const i=idx.get(c.p);domains[i]=domains[i].filter(s=>{const q=position(s,data.columns);return c.kind==='front'?q.r<=c.value:c.kind==='columns'?q.c>=c.min&&q.c<=c.max:q.r===c.r&&q.c===c.c;});
     });
@@ -119,10 +139,11 @@ function createSeatingEngine() {
   function inspect(data,cs) {
     if(!data.students.length)return {error:['番号または名前を1人以上登録してください。']};
     if(data.students.length>data.rows*data.columns)return {error:[`${data.students.length}人に対して${data.rows*data.columns}席しかありません。${data.students.length-data.rows*data.columns}席不足しています。`]};
+    const vacancyErrors=vacancyProblems(data);if(vacancyErrors.length)return {error:vacancyErrors};
     const model=build(data,cs);if(model.error)return model;
-    for(let i=0;i<model.domains.length;i++)if(!model.domains[i].length){const p=data.students[i],withoutGender=build(data,cs.filter(c=>c.kind!=='gender')),candidates=withoutGender.domains?.[i]||[],genderRules=cs.filter(c=>c.kind==='gender'&&candidates.includes((c.r-1)*data.columns+c.c-1));return {error:[`「${p.label}」が座れる席がありません。`,...cs.filter(c=>c.p===p.id).map(c=>c.label),...(genderRules.length?[`「${p.label}」の性別は${p.gender==='u'?'未設定':p.gender==='m'?'男子':'女子'}です。次の座席指定と両立しません。`,...genderRules.map(c=>c.label)]:[])]};}
+    for(let i=0;i<model.domains.length;i++)if(!model.domains[i].length){const p=data.students[i],withoutGender=build(data,cs.filter(c=>c.kind!=='gender')),candidates=withoutGender.domains?.[i]||[],genderRules=cs.filter(c=>c.kind==='gender'&&candidates.includes((c.r-1)*data.columns+c.c-1)),withoutEmpty=build(data,cs.filter(c=>c.kind!=='empty')),emptyRules=cs.filter(c=>c.kind==='empty'&&(withoutEmpty.domains?.[i]||[]).includes((c.r-1)*data.columns+c.c-1));return {error:[`「${p.label}」が座れる席がありません。`,...cs.filter(c=>c.p===p.id).map(c=>c.label),...(emptyRules.length?[...emptyRules.map(c=>c.label),'空席の位置は「座席条件」で変更できます。']:[]),...(genderRules.length?[`「${p.label}」の性別は${p.gender==='u'?'未設定':p.gender==='m'?'男子':'女子'}です。次の座席指定と両立しません。`,...genderRules.map(c=>c.label)]:[])]};}
     const match=matching(model.domains,model.total,true);
-    if(!match.ok){const names=match.people.map(i=>`「${data.students[i].label}」`).join('・');return {error:[`${names}の${match.people.length}人に対して、条件に合う候補席が合計${match.seats.length}席しかありません。`,...cs.filter(c=>match.people.some(i=>c.p===data.students[i].id)||c.kind==='gender').map(c=>c.label)]};}
+    if(!match.ok){const names=match.people.map(i=>`「${data.students[i].label}」`).join('・');return {error:[`${names}の${match.people.length}人に対して、条件に合う候補席が合計${match.seats.length}席しかありません。`,...cs.filter(c=>match.people.some(i=>c.p===data.students[i].id)||c.kind==='gender'||c.kind==='empty').map(c=>c.label)]};}
     for(const p of model.pairs){let max=0;for(const a of model.domains[p.a])for(const b of model.domains[p.b])if(a!==b)max=Math.max(max,distance(a,b,data.columns));if(max<p.distance)return {error:[`${p.label}ことはできません。現在の候補席では、最大でも${max}席までしか離せません。`,...cs.filter(c=>c.p===data.students[p.a].id||c.p===data.students[p.b].id).map(c=>c.label)]};}
     return model;
   }
@@ -151,16 +172,18 @@ function createSeatingEngine() {
     try {const positions=dfs(model.domains.map(d=>randomize(d,random)));if(!positions)return {status:'impossible',nodes};const assignment=Array(total).fill(null);positions.forEach((s,i)=>assignment[s]=data.students[i].id);return {status:'success',assignment,nodes};}
     catch(e){if(e===TIMEOUT)return {status:'unknown',nodes};throw e;}
   }
-  function verify(data,assignment) {
+  function verify(data,assignment,ignoreVacancies=false) {
     if(!Array.isArray(assignment)||assignment.length!==data.rows*data.columns)return ['座席表の大きさが一致しません。'];
     const ids=new Set(data.students.map(p=>p.id)),found=new Map();
     for(let s=0;s<assignment.length;s++){const id=assignment[s];if(id===null)continue;if(!ids.has(id)||found.has(id))return ['名簿にない児童、または重複した児童が座席表に含まれています。'];found.set(id,s);}
     if(found.size!==ids.size)return ['配置されていない児童がいます。'];
-    const model=build(data,constraints(data));if(model.error)return model.error;
+    if(!ignoreVacancies){const vacancyErrors=vacancyProblems(data);if(vacancyErrors.length)return vacancyErrors;}
+    const cs=constraints(data).filter(c=>!ignoreVacancies||c.kind!=='empty'),model=build(data,cs);if(model.error)return model.error;
     const errors=[];data.students.forEach(p=>{const q=position(found.get(p.id),data.columns);
       if(p.rowMax!==null&&q.r>p.rowMax)errors.push(`「${p.label}」は前から${p.rowMax}行目までの指定です（移動先は${q.r}行目）。`);
       if(q.c<(p.colMin??1)||q.c>(p.colMax??data.columns))errors.push(`「${p.label}」は左から縦列${p.colMin??1}〜${p.colMax??data.columns}列の指定です（移動先は${q.c}列目）。`);
       if(p.fixed&&(q.r!==p.fixed.r||q.c!==p.fixed.c))errors.push(`「${p.label}」は${seatText(p.fixed.r,p.fixed.c)}に固定されています。`);
+      if(!ignoreVacancies&&vacancies(data).some(s=>s.r===q.r&&s.c===q.c))errors.push(`${seatText(q.r,q.c)}は空席に指定されています。「${p.label}」は配置できません。空席の位置は「座席条件」で変更してください。`);
       const rule=data.seatRules.find(s=>s.r===q.r&&s.c===q.c);
       if(rule&&rule.gender!==p.gender)errors.push(`${seatText(q.r,q.c)}は${rule.gender==='m'?'男子':'女子'}のみの席です。「${p.label}」の性別は${p.gender==='u'?'未設定':p.gender==='m'?'男子':'女子'}です。`);
     });
@@ -186,19 +209,29 @@ function createSeatingEngine() {
     const assignment=[...data.assignment];[assignment[from],assignment[to]]=[assignment[to],assignment[from]];
     const errors=verify(data,assignment);return errors.length?{status:'blocked',reasons:errors}:{status:'success',assignment};
   }
-  function decode(text) {let file;try{file=JSON.parse(text);}catch{throw Error('ファイルを読み取れません。席替えメーカーで保存したJSONファイルを選んでください。');}if(!file||file.format!=='classroom-seating'||file.version!==1)throw Error('この席替えメーカーの対応する保存ファイルではありません。');const data=cleanData(file.data);if(data.assignment!==null){const errors=verify(data,data.assignment);if(errors.length)throw Error('保存された座席表が条件を満たしていないため、読み込みを中止しました。'+errors.join(' '));}return data;}
-  function encode(data) {const clean=cleanData(data);if(clean.assignment!==null){const errors=verify(clean,clean.assignment);if(errors.length)throw Error(errors.join(' '));}return JSON.stringify({format:'classroom-seating',version:1,savedAt:new Date().toISOString(),data:clean},null,2);}
-  return {cleanData,constraints,inspect,solve,verify,encode,decode,distance,swap};
+  function decodeDetailed(text) {
+    let file;try{file=JSON.parse(text);}catch{throw Error('ファイルを読み取れません。席替えメーカーで保存したJSONファイルを選んでください。');}
+    if(!file||file.format!=='classroom-seating'||![1,2].includes(file.version))throw Error('この席替えメーカーの対応する保存ファイルではありません。');
+    if(file.version===2&&(!file.data?.vacancyMode||!Array.isArray(file.data.emptySeats)))throw Error('保存された空席設定が不正です。');
+    const legacy=file.version===1&&file.data?.vacancyMode===undefined,data=cleanData(file.data);let notice=null;
+    if(data.assignment!==null){const errors=verify(data,data.assignment,legacy);if(errors.length)throw Error('保存された座席表が条件を満たしていないため、読み込みを中止しました。'+errors.join(' '));
+      if(legacy&&verify(data,data.assignment).length){data.assignment=null;notice='以前の座席表は空席の位置が新しい設定と異なるため、結果だけを未作成に戻しました。名簿・性別・児童の条件は保持しています。空席は後ろ・右側にまとめる設定です。もう一度席替えしてください。';}}
+    return {data,notice};
+  }
+  function decode(text) {return decodeDetailed(text).data;}
+  function encode(data) {const clean=cleanData(data);if(clean.assignment!==null){const errors=verify(clean,clean.assignment);if(errors.length)throw Error(errors.join(' '));}return JSON.stringify({format:'classroom-seating',version:2,savedAt:new Date().toISOString(),data:clean},null,2);}
+  return {cleanData,constraints,inspect,solve,verify,encode,decode,decodeDetailed,distance,swap,vacancies};
 }
 
 'use strict';
 const Engine=createSeatingEngine();
 const $=id=>document.getElementById(id);
 const STORAGE_KEY='ryota.seating.v1', PREF_KEY='ryota.seating.autosave';
-const fresh=()=>({rows:5,columns:6,students:[],seatRules:[],pairs:[],assignment:null});
+const fresh=()=>({rows:5,columns:6,students:[],seatRules:[],pairs:[],assignment:null,vacancyMode:'back-right',emptySeats:[]});
 const clone=value=>JSON.parse(JSON.stringify(value));
 let state=fresh(),history=[],activeTab='roster',paint='m',editingId=null,worker=null,job=0,busy=false,lastFocused=null;
 let adjustMode=true,previousAdjustMode=true,selectedSeat=null,drag=null,suppressClickUntil=0,fitFrame=0,ownedFullscreen=false;
+let seatEdit='gender';
 const uid=()=>typeof crypto.randomUUID==='function'?crypto.randomUUID():`s${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
 const newStudent=label=>({id:uid(),label,gender:'u',rowMax:null,colMin:null,colMax:null,fixed:null});
 const genderName=g=>g==='m'?'男子':g==='f'?'女子':'未設定';
@@ -213,17 +246,22 @@ function validity(){try{const d=Engine.cleanData(state);if(d.assignment===null)r
 function countSummary(){const m=state.students.filter(p=>p.gender==='m').length,f=state.students.filter(p=>p.gender==='f').length;return `${state.students.length}人（男${m}・女${f}・未${state.students.length-m-f}）`;}
 function conditionText(p){const a=[];if(p.rowMax!==null)a.push(`前${p.rowMax}行まで`);if(p.colMin!==null||p.colMax!==null)a.push(`縦列${p.colMin??1}〜${p.colMax??state.columns}`);if(p.fixed)a.push(`固定 ${p.fixed.r}行${p.fixed.c}列`);return a.length?a.join(' / '):'場所の条件を設定';}
 function refreshBoard(){const valid=validity(),focused=document.body.classList.contains('board-focus'),editing=activeTab==='seats'&&!focused,adjustable=valid&&adjustMode&&!editing&&!busy;
+ if(seatEdit==='vacancy'&&state.vacancyMode!=='manual')seatEdit='gender';
+ const empty=Engine.vacancies(state),emptyKeys=new Set(empty.map(q=>`${q.r},${q.c}`)),needed=Math.max(0,state.rows*state.columns-state.students.length);
+ $('vacancyMode').value=state.vacancyMode;$('editVacancies').setAttribute('aria-pressed',String(editing&&seatEdit==='vacancy'));document.querySelectorAll('[data-paint]').forEach(b=>b.setAttribute('aria-pressed',String(seatEdit==='gender'&&b.dataset.paint===paint)));
+ $('vacancySummary').textContent=state.vacancyMode==='manual'?`空席の指定：${empty.length} / ${needed}席。座席をタップして切り替えます。`:`余る${needed}席を、後ろの行から${state.vacancyMode==='back-left'?'左':'右'}側へ空席にします。`;
+ $('vacancySummary').classList.toggle('danger',state.vacancyMode==='manual'&&empty.length!==needed);
  document.body.classList.toggle('has-valid-result',valid);$('summary').textContent=`${state.students.length}人 / ${state.columns*state.rows}席（横${state.columns} × 前後${state.rows}）`;$('rosterCount').textContent=countSummary();$('resultStatus').textContent=busy?'条件を確認しています…':valid?'すべての条件を確認済み':state.students.length?'結果未作成 · 条件を守って席替え':'名簿を登録してください';
  $('undoBtn').disabled=busy||!history.length;$('undoBoardBtn').disabled=busy||!history.length;$('copyBtn').disabled=busy||!valid;$('printBtn').disabled=busy||!valid;$('manualBtn').disabled=busy||!valid||editing;$('manualBtn').setAttribute('aria-pressed',String(adjustable));$('manualBtn').textContent=adjustable?'手動調整中':'手動調整';$('cancelSelection').hidden=selectedSeat===null;
  $('boardTitle').textContent=focused?(valid?`座席表 · ${state.students.length}人`:'設定用の座席図'):'座席表';
  $('adjustStatus').textContent=adjustable?'ドラッグ、または2席をタップして入れ替え。':valid?'席をタップすると番号・名前を拡大できます。':'席替え後に、条件を守りながら調整できます。';
- $('boardCaption').textContent=editing?`タップして「${paint==='any'?'指定なし':genderName(paint)+'のみ'}」に変更します。変更すると結果は無効になります。`:valid?'すべての児童の条件を満たす座席表です。':'設定用の座席図です。条件を満たす結果だけを表示します。';
+ $('boardCaption').textContent=editing?(seatEdit==='vacancy'?`空席にする場所をタップしてください。現在${empty.length}席 / 必要${needed}席。変更すると結果は未作成に戻ります。`:`タップして「${paint==='any'?'指定なし':genderName(paint)+'のみ'}」に変更します。変更すると結果は無効になります。`):valid?`すべての児童の条件を満たす座席表です。空席${empty.length}席は使用しません。`:'設定用の座席図です。灰色の「空席」には児童を配置しません。';
  $('classroom').style.setProperty('--cols',state.columns);$('classroom').style.setProperty('--rows',state.rows);const grid=$('seatGrid');grid.replaceChildren(element('span',''));
  for(let c=1;c<=state.columns;c++)grid.append(element('span',focused?String(c):`${c}列`,'axis'));
  const rules=new Map(state.seatRules.map(s=>[`${s.r},${s.c}`,s.gender]));const people=new Map(state.students.map(p=>[p.id,p]));
- for(let r=1;r<=state.rows;r++){grid.append(element('span',focused?String(r):`${r}行`,'axis row-axis'));for(let c=1;c<=state.columns;c++){const index=(r-1)*state.columns+c-1,g=rules.get(`${r},${c}`)||'any',p=valid?people.get(state.assignment[index]):null;
- const b=button('',()=>seatClick(index,r,c),`seat-button ${editing?'editable':adjustable?'adjustable':'readonly'}`);b.dataset.gender=p?(p.gender==='u'?'any':p.gender):g;b.dataset.row=r;b.dataset.column=c;b.dataset.seat=index;b.disabled=busy;b.tabIndex=editing||valid?0:-1;b.setAttribute('aria-pressed',String(index===selectedSeat));b.classList.toggle('selected-seat',index===selectedSeat);b.setAttribute('aria-label',`前から${r}行・左から${c}列、${p?p.label:valid?'空席':'未配置'}、${g==='any'?'性別指定なし':genderName(g)+'のみ'}`);
- b.append(element('span',p?p.label:valid?'空席':'—','person-label'+(p&&/^\d+$/.test(p.label)?' number-label':'')));b.append(element('span',p?genderName(p.gender)+(g==='any'?'':'・指定席'):g==='any'?'指定なし':genderName(g)+'のみ','seat-rule'));if(p?.fixed)b.append(element('span','固定','fixed-label'));grid.append(b);}}
+ for(let r=1;r<=state.rows;r++){grid.append(element('span',focused?String(r):`${r}行`,'axis row-axis'));for(let c=1;c<=state.columns;c++){const index=(r-1)*state.columns+c-1,g=rules.get(`${r},${c}`)||'any',p=valid?people.get(state.assignment[index]):null,vacant=emptyKeys.has(`${r},${c}`);
+ const b=button('',()=>seatClick(index,r,c),`seat-button ${editing?'editable':adjustable?'adjustable':'readonly'}${vacant?' vacant-seat':''}`);b.dataset.gender=vacant?'any':p?(p.gender==='u'?'any':p.gender):g;b.dataset.row=r;b.dataset.column=c;b.dataset.seat=index;b.dataset.vacant=String(vacant);b.disabled=busy;b.tabIndex=editing||valid?0:-1;b.setAttribute('aria-pressed',String(editing&&seatEdit==='vacancy'?vacant:index===selectedSeat));b.classList.toggle('selected-seat',index===selectedSeat);b.setAttribute('aria-label',`前から${r}行・左から${c}列、${vacant?'空席に指定':p?p.label:valid?'空席':'未配置'}、${g==='any'?'性別指定なし':genderName(g)+'のみ'}`);
+ b.append(element('span',vacant?'空席':p?p.label:valid?'空席':'—','person-label'+(p&&/^\d+$/.test(p.label)?' number-label':'')));b.append(element('span',vacant?'使用しない':p?genderName(p.gender)+(g==='any'?'':'・指定席'):g==='any'?'指定なし':genderName(g)+'のみ','seat-rule'));if(p?.fixed)b.append(element('span','固定','fixed-label'));grid.append(b);}}
  scheduleFit();
 }
 function renderRoster(){const list=$('roster');const scroll=list.scrollTop;list.replaceChildren();if(!state.students.length)list.append(element('div','人数を入力して「番号で作成」から始められます。','empty-roster'));
@@ -237,7 +275,10 @@ function renderPairs(){for(const key of ['pairA','pairB']){const select=$(key),p
 }
 function renderAll(){$('rows').value=state.rows;$('columns').value=state.columns;renderRoster();renderPairs();refreshBoard();}
 function selectTab(tab){cancelDrag();selectedSeat=null;activeTab=tab;['roster','seats','pairs'].forEach(t=>{$('tab-'+t).setAttribute('aria-selected',String(t===tab));$('tab-'+t).tabIndex=t===tab?0:-1;$('panel-'+t).hidden=t!==tab;});refreshBoard();}
-function paintSeat(r,c){if(activeTab!=='seats'||busy||document.body.classList.contains('board-focus'))return;const current=state.seatRules.find(q=>q.r===r&&q.c===c)?.gender||'any';if(current===paint)return;commit(()=>{state.seatRules=state.seatRules.filter(q=>q.r!==r||q.c!==c);if(paint!=='any')state.seatRules.push({r,c,gender:paint});},{rerender:false});const seat=document.querySelector(`[data-row="${r}"][data-column="${c}"]`);seat?.focus({preventScroll:true});}
+function paintSeat(r,c){if(activeTab!=='seats'||busy||document.body.classList.contains('board-focus'))return;
+ if(seatEdit==='vacancy'){commit(()=>{const exists=state.emptySeats.some(q=>q.r===r&&q.c===c);state.emptySeats=exists?state.emptySeats.filter(q=>q.r!==r||q.c!==c):[...state.emptySeats,{r,c}];},{rerender:false});return;}
+ if(Engine.vacancies(state).some(q=>q.r===r&&q.c===c)){showNotice('この席は空席に指定されています',['使用する場合は「空席の位置」を変更してください。'],'info');return;}
+ const current=state.seatRules.find(q=>q.r===r&&q.c===c)?.gender||'any';if(current===paint)return;commit(()=>{state.seatRules=state.seatRules.filter(q=>q.r!==r||q.c!==c);if(paint!=='any')state.seatRules.push({r,c,gender:paint});},{rerender:false});const seat=document.querySelector(`[data-row="${r}"][data-column="${c}"]`);seat?.focus({preventScroll:true});}
 function replaceRoster(students){if(state.students.length||state.pairs.length||state.assignment){if(!confirm('名簿を置き換えますか？ 児童ごとの条件・離す組・座席結果もリセットします。座席の形と席の性別指定は残ります。'))return;}commit(()=>{state.students=students;state.pairs=[];});}
 function readNumber(id,min,max){const input=$(id),v=Number(input.value);if(!input.value.trim()||!Number.isInteger(v)||v<min||v>max)throw Error(`${input.labels?.[0]?.textContent||input.getAttribute('aria-label')||'数値'}は${min}〜${max}の整数にしてください。`);return v;}
 function optionalNumber(id){return $(id).value.trim()===''?null:readNumber(id,1,12);}
@@ -263,7 +304,9 @@ $('undoBtn').addEventListener('click',undoChange);
 ['rows','columns'].forEach(id=>$(id).addEventListener('change',()=>{try{const value=readNumber(id,1,12);if(state[id]!==value)commit(()=>state[id]=value);}catch(e){showNotice('座席の形を確認してください',[e.message]);}}));
 ['roster','seats','pairs'].forEach((tab,index)=>{$('tab-'+tab).addEventListener('click',()=>selectTab(tab));$('tab-'+tab).addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const tabs=['roster','seats','pairs'],i=e.key==='Home'?0:e.key==='End'?2:(index+(e.key==='ArrowRight'?1:2))%3;selectTab(tabs[i]);$('tab-'+tabs[i]).focus();});});
 $('goRoster').addEventListener('click',()=>selectTab('roster'));
-document.querySelectorAll('[data-paint]').forEach(b=>b.addEventListener('click',()=>{paint=b.dataset.paint;document.querySelectorAll('[data-paint]').forEach(q=>q.setAttribute('aria-pressed',String(q===b)));refreshBoard();}));
+document.querySelectorAll('[data-paint]').forEach(b=>b.addEventListener('click',()=>{seatEdit='gender';paint=b.dataset.paint;refreshBoard();}));
+$('vacancyMode').addEventListener('change',()=>{const mode=$('vacancyMode').value,previous=Engine.vacancies(state);seatEdit=mode==='manual'?'vacancy':'gender';commit(()=>{state.vacancyMode=mode;if(mode==='manual')state.emptySeats=previous;});});
+$('editVacancies').addEventListener('click',()=>{seatEdit='vacancy';if(state.vacancyMode!=='manual'){const previous=Engine.vacancies(state);commit(()=>{state.vacancyMode='manual';state.emptySeats=previous;});}else refreshBoard();$('boardSide').scrollIntoView({behavior:'smooth',block:'start'});});
 $('clearSeatRules').addEventListener('click',()=>{if(state.seatRules.length&&confirm('すべての席の性別指定を解除しますか？'))commit(()=>state.seatRules=[]);});
 $('jumpBoard').addEventListener('click',()=>$('boardSide').scrollIntoView({behavior:'smooth',block:'start'}));
 $('addPair').addEventListener('click',()=>{try{const a=$('pairA').value,b=$('pairB').value,distance=readNumber('pairDistance',1,12);if(!a||!b)throw Error('2人の児童を選んでください。');if(a===b)throw Error('異なる2人を選んでください。');if(state.pairs.length>=500)throw Error('離す組は500組までです。');commit(()=>{const existing=state.pairs.find(p=>(p.a===a&&p.b===b)||(p.a===b&&p.b===a));if(existing)existing.distance=distance;else state.pairs.push({id:uid(),a,b,distance});});}catch(e){showNotice('離す組を確認してください',[e.message],'error',true);}});
@@ -275,7 +318,7 @@ $('resetStudent').addEventListener('click',()=>{const id=editingId;closeStudent(
 $('shuffleBtn').addEventListener('click',()=>run(false));$('checkBtn').addEventListener('click',()=>run(true));$('cancelBtn').addEventListener('click',cancelSolve);
 $('saveFile').addEventListener('click',()=>{try{assertInputs();const text=Engine.encode(state),url=URL.createObjectURL(new Blob([text],{type:'application/json;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=`席替え_${new Date().toLocaleDateString('sv-SE')}.json`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);showNotice('保存ファイルを作成しました',['名簿・性別・条件・座席結果を含みます。次回は「ファイルを開く」で読み込めます。'],'ok');}catch(e){showNotice('保存できませんでした',[e.message],'error',true);}});
 $('loadFile').addEventListener('click',()=>$('fileInput').click());
-$('fileInput').addEventListener('change',async()=>{const file=$('fileInput').files[0];$('fileInput').value='';if(!file)return;const before=JSON.stringify(state);try{if(file.size>2000000)throw Error('ファイルが大きすぎます。2MB以下の保存ファイルを選んでください。');const loaded=Engine.decode(await file.text());if(busy||before!==JSON.stringify(state))throw Error('読み込み中に設定が変わったため、中止しました。もう一度開いてください。');if((state.students.length||state.seatRules.length||state.pairs.length||state.assignment)&&!confirm('保存ファイルの内容に置き換えますか？ 現在の名簿・条件・座席表は置き換わります。'))return;commit(()=>{state=loaded;},{keepResult:true});const issues=loaded.students.length?Engine.inspect(loaded,Engine.constraints(loaded)).error:null;if(issues)showNotice('設定を読み込みましたが、この条件では席替えできません',issues,'error',true);else showNotice('保存ファイルを読み込みました',[loaded.assignment?'保存された座席結果も、条件を再確認して復元しました。':'名簿と条件を復元しました。席替え時にすべての条件を確認します。'],'ok',true);}catch(e){showNotice('ファイルの読み込みを中止しました',[e.message,'現在の名簿・条件・座席表は変更していません。'],'error',true);}});
+$('fileInput').addEventListener('change',async()=>{const file=$('fileInput').files[0];$('fileInput').value='';if(!file)return;const before=JSON.stringify(state);try{if(file.size>2000000)throw Error('ファイルが大きすぎます。2MB以下の保存ファイルを選んでください。');const decoded=Engine.decodeDetailed(await file.text()),loaded=decoded.data;if(busy||before!==JSON.stringify(state))throw Error('読み込み中に設定が変わったため、中止しました。もう一度開いてください。');if((state.students.length||state.seatRules.length||state.pairs.length||state.assignment)&&!confirm('保存ファイルの内容に置き換えますか？ 現在の名簿・条件・座席表は置き換わります。'))return;commit(()=>{state=loaded;},{keepResult:true});const issues=loaded.students.length?Engine.inspect(loaded,Engine.constraints(loaded)).error:null;if(issues)showNotice('設定を読み込みましたが、この条件では席替えできません',[...(decoded.notice?[decoded.notice]:[]),...issues],'error',true);else showNotice(decoded.notice?'空席の配置ルールを更新しました':'保存ファイルを読み込みました',[decoded.notice||(loaded.assignment?'保存された座席結果も、条件を再確認して復元しました。':'名簿と条件を復元しました。席替え時にすべての条件を確認します。')],decoded.notice?'info':'ok',true);}catch(e){showNotice('ファイルの読み込みを中止しました',[e.message,'現在の名簿・条件・座席表は変更していません。'],'error',true);}});
 $('autoSave').addEventListener('change',()=>{try{localStorage.setItem(PREF_KEY,$('autoSave').checked?'on':'off');}catch{}persist();});
 $('viewBtn').addEventListener('click',()=>{if(document.body.classList.contains('board-focus'))leaveFocus();else setFocusMode(true);});
 document.addEventListener('keydown',e=>{if(e.key!=='Escape'||document.querySelector('dialog[open]'))return;if(drag){cancelDrag();return;}if(selectedSeat!==null){selectedSeat=null;markSelection();return;}if(document.body.classList.contains('board-focus'))leaveFocus();});
@@ -330,7 +373,7 @@ document.addEventListener('fullscreenchange',()=>{$('fullscreenBtn').textContent
 window.addEventListener('resize',scheduleFit);window.visualViewport?.addEventListener('resize',scheduleFit);
 new ResizeObserver(scheduleFit).observe($('boardScroll'));
 
-try{const pref=localStorage.getItem(PREF_KEY);$('autoSave').checked=pref!=='off';const saved=localStorage.getItem(STORAGE_KEY);if(saved&&pref!=='off'){state=Engine.decode(saved);$('saveStatus').textContent='このブラウザーの保存データを復元しました。';}}catch(e){$('autoSave').checked=false;showNotice('自動保存データを復元できませんでした',[e.message,'元の保存データは残しています。必要なら保存ファイルから開いてください。']);}
+try{const pref=localStorage.getItem(PREF_KEY);$('autoSave').checked=pref!=='off';const saved=localStorage.getItem(STORAGE_KEY);if(saved&&pref!=='off'){const decoded=Engine.decodeDetailed(saved);state=decoded.data;$('saveStatus').textContent='このブラウザーの保存データを復元しました。';if(decoded.notice)showNotice('空席の配置ルールを更新しました',[decoded.notice],'info');}}catch(e){$('autoSave').checked=false;showNotice('自動保存データを復元できませんでした',[e.message,'元の保存データは残しています。必要なら保存ファイルから開いてください。']);}
 renderAll();if(!$('autoSave').checked)$('saveStatus').textContent='自動保存はオフです。ファイルに保存できます。';
 
 </script>
