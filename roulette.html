@@ -596,6 +596,76 @@
         }
     </style>
 <link rel="stylesheet" href="./classroom.css?v=20260905">
+<style>
+    [hidden] { display: none !important; }
+    body[data-tool="roulette"] .control-card { min-width: 0; }
+    body[data-tool="roulette"] .primary-actions .btn { padding-inline: 8px; white-space: nowrap; font-size: clamp(1rem, 1.5vw, 1.5rem); }
+    .draw-settings { min-width: 0; margin-bottom: 18px; }
+    .mode-label { display: block; margin-bottom: 8px; font-size: 1rem; font-weight: 700; }
+    .mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    body[data-tool="roulette"] .mode-button {
+        min-height: 44px; padding: 10px 8px; font-size: .875rem;
+        color: #31483a; background: #fff; border: 1px solid #bbc7bd;
+    }
+    body[data-tool="roulette"] .mode-button[aria-pressed="true"] {
+        color: #fff; background: #24523f; border-color: #24523f;
+    }
+    .mode-help { margin: 8px 0 0; font-size: .875rem; line-height: 1.6; color: #626c65; }
+    .draw-progress { margin-top: 12px; padding-top: 12px; border-top: 1px solid #d8dfd9; }
+    .draw-progress p { margin: 0 0 8px; font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .restore-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    body[data-tool="roulette"] .restore-button {
+        min-height: 44px; padding: 8px 12px; font-size: .875rem;
+        color: #31483a; background: #fff; border: 1px solid #bbc7bd;
+    }
+    body[data-tool="roulette"] button:disabled { opacity: .45; cursor: default; transform: none; }
+    .storage-notice { margin: 8px 0 0; color: #925026; font-size: .875rem; }
+    body[data-tool="roulette"] .wheel-center:has(.wheel-empty) { width: 62%; aspect-ratio: auto; padding: 18px 10px; border-radius: 8px; }
+    .wheel-empty { text-align: center; font-size: clamp(1rem, 3vw, 1.7rem); line-height: 1.5; letter-spacing: 0; }
+    .wheel-empty small { display: block; margin-top: 4px; font-size: .875rem; font-weight: 500; }
+    #currentResult { line-height: 1.3; }
+    #resultPopup { overflow-y: auto; }
+    #resultPopupContent { max-width: 100%; }
+    .popup-result { max-width: 100%; line-height: 1.3; }
+    @media (min-width: 681px) and (max-width: 940px) {
+        .draw-settings { grid-column: 1 / -1; margin-bottom: 0; }
+        .mode-switch { max-width: 360px; }
+        .draw-progress { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
+        .draw-progress p { margin: 0; }
+    }
+    body.app-fullscreen .control-card { overflow-y: auto; align-content: start; }
+    body.app-fullscreen .draw-settings { margin-bottom: 12px; }
+    body.app-fullscreen .result-preview { min-height: 76px; padding: 12px; margin-bottom: 12px; }
+    body.app-fullscreen #currentResult { font-size: clamp(1.125rem, 2.5vw, 2.5rem); }
+    body.app-fullscreen .btn { min-height: 52px; padding: 10px; font-size: 1rem; }
+    @media (max-width: 940px) {
+        body.app-fullscreen .draw-settings { margin-bottom: 0; }
+        body.app-fullscreen .roulette-card { overflow: hidden; }
+        body[data-tool="roulette"].app-fullscreen #roulette { width: auto; height: min(100%, 92vw); min-width: 0; min-height: 0; aspect-ratio: 1; }
+    }
+    @media (max-width: 680px) {
+        body.app-fullscreen .main-grid { grid-template-rows: minmax(100px, 1fr) auto; }
+        body.app-fullscreen .control-card { padding: 10px; gap: 8px; max-height: 70dvh; }
+        body.app-fullscreen .primary-actions { grid-template-columns: 1fr 1fr; }
+        body.app-fullscreen .button-stack { grid-template-columns: 1fr 1fr; gap: 8px; }
+        body.app-fullscreen .primary-actions { grid-column: 1 / -1; }
+        body.app-fullscreen .result-preview { margin: 0; min-height: 64px; padding: 8px 12px; }
+        body.app-fullscreen .draw-progress { margin-top: 8px; padding-top: 8px; }
+        body.app-fullscreen .mode-help { display: none; }
+    }
+    @media (max-height: 520px) and (orientation: landscape) {
+        body.app-fullscreen .main-grid { grid-template-columns: minmax(0, 1fr) minmax(280px, 42%); grid-template-rows: 1fr; }
+        body.app-fullscreen .control-card { display: block; max-height: 100%; padding: 10px; }
+        body.app-fullscreen .draw-settings { margin-bottom: 8px; }
+        body.app-fullscreen .draw-progress { margin-top: 6px; padding-top: 6px; }
+        body.app-fullscreen .mode-help { display: none; }
+        body.app-fullscreen .button-stack { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        body.app-fullscreen .primary-actions { grid-template-columns: 1fr 1fr; grid-column: 1 / -1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        #resultPopupContent { animation: none; }
+    }
+</style>
 </head>
 <body data-tool="roulette">
     <div class="app-shell">
@@ -618,6 +688,22 @@
                 </section>
 
                 <aside class="control-card">
+                    <div class="draw-settings">
+                        <span class="mode-label" id="drawModeLabel">抽選モード</span>
+                        <div class="mode-switch" role="group" aria-labelledby="drawModeLabel">
+                            <button class="mode-button" data-draw-mode="normal" aria-pressed="true" aria-describedby="modeHelp">通常モード</button>
+                            <button class="mode-button" data-draw-mode="unique" aria-pressed="false" aria-describedby="modeHelp">重複なしモード</button>
+                        </div>
+                        <p class="mode-help" id="modeHelp">同じ項目も、何度でも抽選されます。</p>
+                        <div class="draw-progress" id="drawProgress" hidden>
+                            <p id="remainingLabel" role="status"></p>
+                            <div class="restore-actions">
+                                <button class="restore-button" id="undoDrawButton">1つ戻す</button>
+                                <button class="restore-button" id="resetDrawButton">すべて戻す</button>
+                            </div>
+                        </div>
+                        <p class="storage-notice" id="drawStorageNotice" role="status" hidden>抽選状況を保存できません。この画面を開いている間は使えます。</p>
+                    </div>
                     <div class="result-preview">
                         <div class="result-label">前回の結果</div>
                         <div id="currentResult">まだありません</div>
@@ -676,6 +762,10 @@
         let isStopping = false;
         let canvasSize = 900;
         let appFullscreen = false;
+        const drawStateKey = 'rouletteDrawState.v1';
+        let drawMode = 'normal';
+        let drawnItems = [];
+        let editSnapshot = null;
 
         try {
             const savedItems = localStorage.getItem('rouletteItems');
@@ -688,6 +778,23 @@
             items = ["アイテム1", "アイテム2", "アイテム3", "アイテム4", "アイテム5", "アイテム6", "アイテム7", "アイテム8", "アイテム9", "アイテム10", "アイテム11", "アイテム12"];
         }
 
+        try {
+            const savedState = JSON.parse(localStorage.getItem(drawStateKey));
+            if (savedState && savedState.mode === 'unique') drawMode = 'unique';
+            if (savedState && JSON.stringify(savedState.items) === JSON.stringify(items) && Array.isArray(savedState.drawnItems)) {
+                const knownItems = new Set(items.map(getItemKey));
+                drawnItems = [...new Set(savedState.drawnItems.filter(item => typeof item === 'string' && knownItems.has(item)))];
+            }
+        } catch (error) {
+            // 既存の登録項目は、新しい抽選状態とは独立して読み込みます。
+        }
+
+        document.querySelectorAll('[data-draw-mode]').forEach(button => {
+            button.addEventListener('click', () => setDrawMode(button.dataset.drawMode));
+        });
+        document.getElementById('undoDrawButton').addEventListener('click', undoDraw);
+        document.getElementById('resetDrawButton').addEventListener('click', resetDraw);
+
         document.getElementById('startButton').addEventListener('click', startSpin);
         document.getElementById('stopButton').addEventListener('click', stopSpin);
         document.getElementById('editButton').addEventListener('click', showEditPage);
@@ -699,7 +806,7 @@
             if (event.key === 'Enter') addItem();
         });
         document.getElementById('resultPopup').addEventListener('click', function() {
-            this.style.display = 'none';
+            closeResultPopup();
         });
         window.addEventListener('resize', scheduleResize);
         window.addEventListener('orientationchange', scheduleResize);
@@ -708,6 +815,10 @@
             setAppFullscreen(nativeFullscreen || appFullscreen, nativeFullscreen ? 'native' : 'sync');
         });
         document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && document.getElementById('resultPopup').style.display === 'grid') {
+                closeResultPopup();
+                return;
+            }
             if (event.key === 'Escape' && appFullscreen && !document.fullscreenElement) {
                 setAppFullscreen(false);
             }
@@ -715,6 +826,60 @@
 
         scheduleResize();
         updateCountLabels();
+
+        function getItemKey(item) {
+            return String(item == null ? '' : item).trim() || '未入力';
+        }
+
+        function getAvailableItems() {
+            if (drawMode === 'normal') return items;
+            const excluded = new Set(drawnItems);
+            return items.filter(item => !excluded.has(getItemKey(item)));
+        }
+
+        function saveDrawState() {
+            try {
+                localStorage.setItem(drawStateKey, JSON.stringify({ mode: drawMode, items, drawnItems }));
+                document.getElementById('drawStorageNotice').hidden = true;
+            } catch (error) {
+                document.getElementById('drawStorageNotice').hidden = false;
+            }
+        }
+
+        function setDrawMode(mode) {
+            if (isSpinning || (mode !== 'normal' && mode !== 'unique')) return;
+            drawMode = mode;
+            saveDrawState();
+            updateCountLabels();
+            drawRouletteWheel();
+        }
+
+        function undoDraw() {
+            if (isSpinning || !drawnItems.length) return;
+            drawnItems.pop();
+            refreshDrawProgress();
+        }
+
+        function resetDraw() {
+            if (isSpinning || !drawnItems.length) return;
+            if (!confirm('抽選済みの項目をすべて戻して、最初から抽選しますか？')) return;
+            drawnItems = [];
+            refreshDrawProgress();
+        }
+
+        function refreshDrawProgress() {
+            document.getElementById('currentResult').textContent = 'まだありません';
+            saveDrawState();
+            updateCountLabels();
+            drawRouletteWheel();
+        }
+
+        function closeResultPopup() {
+            document.getElementById('resultPopup').style.display = 'none';
+            drawRouletteWheel();
+            const nextButton = document.getElementById('startButton');
+            (nextButton.disabled ? document.getElementById('resetDrawButton') : nextButton).focus();
+        }
 
         function scheduleResize() {
             requestAnimationFrame(function() {
@@ -734,11 +899,12 @@
         }
 
         function drawRouletteWheel() {
+            const availableItems = getAvailableItems();
             const center = canvasSize / 2;
             const outsideRadius = canvasSize * 0.47;
             const textRadius = canvasSize * 0.36;
             const innerRadius = canvasSize * 0.04;
-            const totalItems = Math.max(items.length, 1);
+            const totalItems = Math.max(availableItems.length, 1);
             const arc = 2 * Math.PI / totalItems;
 
             ctx.clearRect(0, 0, canvasSize, canvasSize);
@@ -748,6 +914,17 @@
             ctx.fillStyle = 'rgba(255,255,255,0.92)';
             ctx.fill();
             ctx.restore();
+
+            const wheelCenter = document.querySelector('.wheel-center');
+            if (!availableItems.length) {
+                wheelCenter.innerHTML = '<span class="wheel-empty">すべて出ました<small>「すべて戻す」で、もう一度</small></span>';
+                ctx.beginPath();
+                ctx.arc(center, center, outsideRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#edf4ee';
+                ctx.fill();
+                return;
+            }
+            wheelCenter.textContent = 'GO';
 
             for (let i = 0; i < totalItems; i++) {
                 const angle = startAngle + i * arc;
@@ -765,7 +942,7 @@
                 ctx.lineWidth = Math.max(3, canvasSize * 0.006);
                 ctx.strokeStyle = 'rgba(255,255,255,0.85)';
                 ctx.stroke();
-                drawText(items[i], angle, arc, textRadius, center, totalItems);
+                drawText(availableItems[i], angle, arc, textRadius, center, totalItems);
             }
 
             ctx.save();
@@ -837,19 +1014,21 @@
         }
 
         function startSpin() {
-            if (isSpinning || items.length < 2) return;
+            if (isSpinning || !getAvailableItems().length) return;
             cancelAnimationFrame(spinTimeout);
             cancelAnimationFrame(slowDownTimeout);
             isSpinning = true;
             isStopping = false;
             document.getElementById('currentResult').textContent = '回転中...';
             spinAngle = Math.random() * 5 + 12;
+            updateCountLabels();
             spin();
         }
 
         function stopSpin() {
             if (!isSpinning || isStopping) return;
             isStopping = true;
+            updateCountLabels();
             function slowDown() {
                 if (spinAngle > 0.18) {
                     spinAngle *= 0.965;
@@ -866,18 +1045,26 @@
         }
 
         function displayResult() {
-            if (items.length < 2) return;
+            const availableItems = getAvailableItems();
+            if (!availableItems.length) return;
             const degrees = startAngle * 180 / Math.PI + 90;
-            const arcd = 360 / items.length;
-            const index = Math.floor((360 - degrees % 360) / arcd) % items.length;
-            const text = items[index];
+            const arcd = 360 / availableItems.length;
+            const index = Math.floor((360 - degrees % 360) / arcd) % availableItems.length;
+            const text = availableItems[index];
             document.getElementById('currentResult').textContent = text;
             document.getElementById('resultPopupContent').innerHTML = `
                 <div class="popup-label">結果</div>
                 <div class="popup-result">${escapeHtml(text)}</div>
-                <div class="popup-help">画面をタップすると閉じます</div>
+                <div class="popup-help">${drawMode === 'unique' ? 'この項目は次の抽選から外れます。' : '画面をタップすると閉じます'}</div>
+                <button id="closeResultButton" class="btn btn-primary btn-small">閉じる</button>
             `;
+            if (drawMode === 'unique') {
+                drawnItems.push(getItemKey(text));
+                saveDrawState();
+            }
+            updateCountLabels();
             document.getElementById('resultPopup').style.display = 'grid';
+            document.getElementById('closeResultButton').focus();
         }
 
         function showEditPage() {
@@ -888,12 +1075,18 @@
                 isStopping = false;
             }
             setAppFullscreen(false);
+            editSnapshot = { items: [...items], drawnItems: [...drawnItems] };
             document.getElementById('mainPage').style.display = 'none';
             document.getElementById('editPage').style.display = 'block';
             updateItemList();
         }
 
         function hideEditPage() {
+            if (editSnapshot) {
+                items = editSnapshot.items;
+                drawnItems = editSnapshot.drawnItems;
+                editSnapshot = null;
+            }
             document.getElementById('editPage').style.display = 'none';
             document.getElementById('mainPage').style.display = 'block';
             updateCountLabels();
@@ -913,6 +1106,7 @@
                 input.type = 'text';
                 input.value = item;
                 input.dataset.index = index;
+                input.setAttribute('aria-label', `${index + 1}番目の項目`);
                 input.addEventListener('input', function() {
                     items[Number(this.dataset.index)] = this.value;
                     updateCountLabels();
@@ -962,13 +1156,27 @@
                 alert('保存できませんでした。ブラウザの容量や設定を確認してください。');
                 return;
             }
+            drawnItems = drawnItems.filter(item => items.some(candidate => getItemKey(candidate) === item));
+            editSnapshot = null;
+            saveDrawState();
             hideEditPage();
         }
 
         function updateCountLabels() {
-            const label = `${items.length}項目`;
-            document.getElementById('itemCountLabel').textContent = label;
-            document.getElementById('editItemCountLabel').textContent = label;
+            const remaining = getAvailableItems().length;
+            document.getElementById('itemCountLabel').textContent = drawMode === 'unique' ? `残り${remaining} / ${items.length}件` : `${items.length}項目`;
+            document.getElementById('editItemCountLabel').textContent = `${items.length}項目`;
+            document.getElementById('remainingLabel').textContent = remaining ? `残り ${remaining} / ${items.length} 件` : 'すべての項目を抽選しました';
+            document.getElementById('drawProgress').hidden = drawMode !== 'unique';
+            document.getElementById('modeHelp').textContent = drawMode === 'unique' ? '出た名前・番号は、次の抽選から消えます。' : '同じ項目も、何度でも抽選されます。';
+            document.querySelectorAll('[data-draw-mode]').forEach(button => {
+                button.setAttribute('aria-pressed', String(button.dataset.drawMode === drawMode));
+                button.disabled = isSpinning;
+            });
+            document.getElementById('startButton').disabled = isSpinning || !remaining;
+            document.getElementById('stopButton').disabled = !isSpinning || isStopping;
+            document.getElementById('undoDrawButton').disabled = isSpinning || !drawnItems.length;
+            document.getElementById('resetDrawButton').disabled = isSpinning || !drawnItems.length;
         }
 
         async function toggleFullscreen() {
@@ -1023,4 +1231,5 @@
     </script>
 </body>
 </html>
+
 
