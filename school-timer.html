@@ -3,190 +3,424 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f4f8ff">
+  <meta name="theme-color" content="#f6f8fc">
+  <meta name="description" content="分と秒のダイヤルで時間を合わせる、シンプルな学校用タイマー。">
   <title>学校タイマー</title>
   <style>
-    :root{
-      --bg:#f4f8ff;--panel:#fff;--ink:#152033;--muted:#65738a;--line:#d9e5f7;
-      --blue:#2563eb;--blue-dark:#1d4ed8;--pale:#eaf2ff;--green:#16a34a;
-      --orange:#f97316;--red:#e11d48;--shadow:0 18px 55px rgba(38,76,135,.13)
-    }
-    *{box-sizing:border-box}
-    html,body{min-height:100%}
-    body{margin:0;color:var(--ink);background:radial-gradient(circle at 10% 0,#dbeafe 0,transparent 34%),radial-gradient(circle at 95% 95%,#dcfce7 0,transparent 30%),var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif}
-    button,input,select,textarea{font:inherit}
-    button{cursor:pointer;touch-action:manipulation}
-    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:4px solid #93c5fd;outline-offset:3px}
-    .app{width:min(1100px,calc(100% - 24px));margin:auto;padding:18px 0 34px}
-    .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
-    .brand{display:flex;align-items:center;gap:10px;font-weight:1000;font-size:clamp(22px,3vw,34px)}
-    .brand-mark{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;color:#fff;background:linear-gradient(135deg,var(--blue),#22c55e);box-shadow:0 10px 24px rgba(37,99,235,.2)}
-    .icon-btn{min-height:48px;padding:0 16px;border:2px solid var(--line);border-radius:15px;background:#fff;color:#334155;font-weight:900}
-    .card{background:rgba(255,255,255,.96);border:2px solid var(--line);border-radius:28px;box-shadow:var(--shadow)}
-    .timer-card{padding:clamp(18px,4vw,38px);text-align:center}
-    .activity{min-height:1.4em;margin:0;color:#334155;font-size:clamp(18px,2.5vw,28px);font-weight:950}
-    .timer{margin:8px 0 4px;color:var(--blue-dark);font-size:clamp(88px,18vw,190px);font-weight:1000;line-height:.92;letter-spacing:-.055em;font-variant-numeric:tabular-nums;text-shadow:0 9px 26px rgba(37,99,235,.15)}
-    .timer.urgent{color:var(--orange)}.timer.done{color:var(--red);animation:pulse .8s ease-in-out 3}
-    @keyframes pulse{50%{transform:scale(1.035)}}
-    .status{min-height:1.5em;margin:8px 0;color:var(--muted);font-size:clamp(17px,2.4vw,26px);font-weight:950}
-    .progress{height:16px;margin:16px auto 0;background:#e5edf8;border-radius:999px;overflow:hidden}
-    .bar{height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#22c55e,#facc15,#f97316);transition:width .2s linear}
-    .primary-controls{display:grid;grid-template-columns:minmax(220px,2fr) 1fr 1fr;gap:12px;margin:14px 0}
-    .control{min-height:72px;border:0;border-radius:20px;font-weight:1000;font-size:clamp(18px,2vw,24px)}
-    .start{color:#fff;background:linear-gradient(135deg,var(--blue),var(--blue-dark));box-shadow:0 14px 28px rgba(37,99,235,.25)}
-    .start.running{background:linear-gradient(135deg,#fb923c,#ea580c)}
-    .secondary{color:#1e3a8a;background:#fff;border:2px solid #bfd5f5}
-    .time-panel{padding:20px}
-    .section-title{margin:0 0 12px;font-size:clamp(20px,2.5vw,28px)}
-    .presets{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
-    .preset{min-height:58px;border:2px solid #c9dbf5;border-radius:16px;background:#fff;color:#1e3a8a;font-weight:1000;font-size:18px}
-    .preset:hover,.preset.selected{border-color:var(--blue);background:var(--pale);color:var(--blue-dark)}
-    .custom-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:14px;margin-top:16px}
-    .time-field label{display:block;margin:0 0 6px;text-align:center;color:var(--muted);font-weight:900}
-    .number-wrap{display:flex;align-items:center;overflow:hidden;border:2px solid #bfd5f5;border-radius:18px;background:#fff}
-    .step{width:54px;align-self:stretch;border:0;background:#edf4ff;color:var(--blue-dark);font-size:28px;font-weight:1000}
-    .time-input{width:100%;min-width:0;height:64px;border:0;text-align:center;color:var(--ink);font-size:30px;font-weight:1000;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
-    .time-input::-webkit-inner-spin-button,.time-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-    .colon{padding-bottom:10px;font-size:38px;font-weight:1000}
-    .nudge-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
-    .nudge{min-height:48px;border:2px solid #d1def0;border-radius:14px;background:#f8fbff;color:#334155;font-weight:950}
-    .hint{margin:14px 0 0;text-align:center;color:var(--muted);font-size:14px;font-weight:800}
-    details{margin-top:14px;overflow:hidden}
-    summary{padding:18px 20px;cursor:pointer;list-style:none;font-size:20px;font-weight:1000}
-    summary::-webkit-details-marker{display:none}
-    summary::after{content:'＋';float:right;color:var(--blue)}details[open] summary::after{content:'−'}
-    .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 20px 20px}
-    .field.full{grid-column:1/-1}.field label{display:block;margin-bottom:6px;color:#334155;font-weight:900}
-    .field input,.field select,.field textarea{width:100%;min-height:52px;padding:10px 12px;border:2px solid #cbdcf3;border-radius:14px;background:#fff;color:var(--ink);font-weight:800}
-    .field textarea{min-height:78px;resize:vertical}
-    .message{margin:14px 0 0;text-align:center;color:#475569;font-size:clamp(16px,2.3vw,24px);font-weight:850;line-height:1.45}
-    .toast{position:fixed;z-index:30;left:50%;top:16px;width:min(620px,calc(100% - 24px));padding:16px;transform:translate(-50%,-140%);opacity:0;border:3px solid #93c5fd;border-radius:20px;background:#fff;text-align:center;font-size:clamp(20px,3vw,32px);font-weight:1000;box-shadow:0 22px 55px rgba(37,99,235,.22);transition:.2s}
-    .toast.show{transform:translate(-50%,0);opacity:1}
-    body.focus{overflow:hidden;background:#fff}
-    body.focus .app{position:fixed;inset:0;width:100%;padding:10px;display:grid;grid-template-rows:auto 1fr auto}
-    body.focus .topbar{justify-content:flex-end;margin:0}body.focus .brand{display:none}
-    body.focus .timer-card{display:grid;align-content:center;border:0;box-shadow:none;padding:0}
-    body.focus .timer{font-size:clamp(130px,28vw,390px)}body.focus .activity{font-size:clamp(25px,5vw,62px)}body.focus .status{font-size:clamp(24px,4vw,52px)}
-    body.focus .time-panel,body.focus details{display:none}body.focus .primary-controls{margin:8px 0;grid-template-columns:2fr 1fr 1fr}body.focus .control{min-height:64px}
-    @media(max-width:760px){.presets{grid-template-columns:repeat(4,1fr)}.primary-controls{grid-template-columns:1fr 1fr}.primary-controls .start{grid-column:1/-1}.settings-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
-    @media(max-width:480px){.app{width:min(100% - 16px,1100px);padding-top:8px}.brand-mark{width:40px;height:40px}.icon-btn{padding:0 11px}.card{border-radius:22px}.timer-card{padding:20px 12px}.timer{font-size:clamp(78px,27vw,128px)}.time-panel{padding:15px}.presets{grid-template-columns:repeat(3,1fr)}.custom-row{gap:7px}.step{width:42px}.time-input{height:58px;font-size:25px}.nudge-row{grid-template-columns:1fr 1fr}.primary-controls{gap:8px}.control{min-height:62px}body.focus .primary-controls{grid-template-columns:1fr 1fr}body.focus .primary-controls .start{grid-column:1/-1}}
+    :root { color-scheme: light; --ink:#182539; --muted:#65738a; --blue:#2563eb; --line:#dce3ee; --row:52px }
+    * { box-sizing:border-box }
+    body { margin:0; min-height:100svh; background:#f6f8fc; color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif }
+    button { font:inherit; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent }
+    button:focus-visible,[tabindex]:focus-visible { outline:3px solid #2563eb; outline-offset:5px }
+    button:disabled { opacity:.4; cursor:default }
+    [hidden] { display:none !important }
+    .app { width:min(660px,100%); min-height:100svh; margin:auto; padding:clamp(26px,6vh,64px) 24px 20px; display:flex; flex-direction:column; justify-content:center }
+    .display { text-align:center }
+    .time { color:#1d4ed8; font-size:clamp(78px,19vw,148px); line-height:1.1; letter-spacing:-.055em; font-weight:750; font-variant-numeric:tabular-nums }
+    .time.urgent { color:#c25116 }
+    .time.done { color:#c92b42 }
+    .status { min-height:26px; margin:10px 0 22px; color:var(--muted); font-size:16px; font-weight:600 }
+    .track { height:5px; border-radius:9px; background:#e1e7f1; overflow:hidden }
+    .progress { height:100%; width:100%; background:var(--blue); border-radius:inherit; transition:width .12s linear }
+    .controls { display:grid; grid-template-columns:1.7fr 1fr; gap:12px; margin-top:24px }
+    .control { display:flex; align-items:center; justify-content:center; gap:10px; min-height:70px; padding:12px; border-radius:18px; font-size:20px; font-weight:700; border:1px solid transparent }
+    .start { background:var(--blue); color:white; box-shadow:0 6px 16px #2563eb20 }
+    .start:hover { background:#1d4ed8 }
+    .reset { background:white; color:var(--ink); border-color:var(--line) }
+    .reset:hover { background:#edf2f9 }
+    .start.alarm { background:#c92b42 }
+    svg { width:22px; height:22px; flex-shrink:0; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round }
+    .time-picker { margin:28px auto 0; width:min(360px,100%) }
+    .wheel-labels { display:grid; grid-template-columns:1fr 1fr; gap:28px; text-align:center; color:var(--muted); font-size:15px; font-weight:650; margin-bottom:8px }
+    .wheels { display:grid; grid-template-columns:1fr 1fr; gap:28px }
+    .wheel-frame { position:relative; min-width:0; isolation:isolate }
+    .wheel-frame::before { content:""; position:absolute; z-index:-1; top:calc(var(--row)*2); left:0; right:0; height:var(--row); border-radius:12px; background:#e7eefc; border:1px solid #d2dff9 }
+    .wheel { height:calc(var(--row)*5); padding:calc(var(--row)*2) 0; overflow-y:auto; overscroll-behavior-y:contain; scroll-snap-type:y mandatory; scrollbar-width:none; border-radius:14px; touch-action:pan-y; -webkit-overflow-scrolling:touch; mask-image:linear-gradient(transparent,#000 34%,#000 66%,transparent) }
+    .wheel::-webkit-scrollbar { display:none }
+    .wheel-value { height:var(--row); line-height:var(--row); scroll-snap-align:center; text-align:center; color:#73829a; font-size:30px; font-weight:550; font-variant-numeric:tabular-nums; user-select:none; cursor:ns-resize }
+    .wheel-value.selected { color:#1745a2; font-weight:750; font-size:36px }
+    .hint { margin:10px 0 0; text-align:center; color:var(--muted); font-size:13px }
+    .running-adjust { margin:28px auto 0 }
+    .add { background:#fff; border:1px solid var(--line); color:#1d4ed8; padding:13px 26px; border-radius:14px; min-height:52px; font-size:18px; font-weight:650 }
+    .utilities { display:flex; justify-content:center; gap:24px; margin-top:26px }
+    .utility { display:flex; align-items:center; gap:7px; min-height:44px; padding:8px; background:transparent; border:0; color:var(--muted); font-size:13px }
+    .utility svg { width:18px; height:18px }
+    .utility:hover { color:var(--blue) }
+    .sound-note { margin:8px 0 0; text-align:center; color:#b92d40; font-size:13px }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0 }
+    body.expanded .app { width:min(1200px,100%); padding:24px; }
+    body.expanded .time { font-size:clamp(100px,25vw,310px) }
+    body.expanded .time-picker { display:none }
+    body.expanded .controls { width:min(660px,100%); align-self:center }
+    body.expanded .status { font-size:22px }
+    @media (max-width:420px) { .app { padding:28px 18px 16px } .control { min-height:64px; font-size:17px; gap:7px } .controls { gap:10px } .time-picker { margin-top:22px } }
+    @media (max-height:740px) { :root { --row:44px } .app { padding-top:22px } .time { font-size:clamp(78px,17vw,124px) } .status { margin:6px 0 16px } .controls { margin-top:18px } .time-picker { margin-top:20px } .utilities { margin-top:16px } }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto !important; transition:none !important } }
   </style>
-<link rel="stylesheet" href="./classroom.css?v=20260905">
 </head>
-<body data-tool="timer">
-  <div id="toast" class="toast" role="alert" aria-live="assertive"></div>
-  <main class="app">
-    <header class="topbar">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">⏱</span><span>学校タイマー</span></div>
-      <button id="focus" class="icon-btn" type="button" aria-pressed="false">⛶ 大画面</button>
-    </header>
+<body>
+  <main class="app" aria-label="学校タイマー">
+    <div class="display">
+      <div id="timer" class="time" role="timer" aria-label="残り5分0秒">05:00</div>
+      <p id="status" class="status" role="status"> </p>
+      <div class="track" aria-hidden="true"><div id="progress" class="progress"></div></div>
+    </div>
 
-    <section class="timer-card card" aria-live="polite">
-      <p id="activity" class="activity">話し合いタイム</p>
-      <div id="timer" class="timer">05:00</div>
-      <p id="status" class="status">時間を選んで、はじめるを押します</p>
-      <div class="progress" aria-hidden="true"><div id="bar" class="bar"></div></div>
-      <p id="message" class="message">相手の方を見て、順番に意見を出しましょう。</p>
-    </section>
+    <div class="controls">
+      <button id="startPause" class="control start" type="button">
+        <svg id="startIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 11 7-11 7z"/></svg>
+        <span id="startLabel">スタート</span>
+      </button>
+      <button id="reset" class="control reset" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2 8M3 4v6h6"/></svg>
+        リセット
+      </button>
+    </div>
 
-    <section class="primary-controls" aria-label="タイマー操作">
-      <button id="startPause" class="control start" type="button">▶ はじめる</button>
-      <button id="reset" class="control secondary" type="button">↺ もどす</button>
-      <button id="addMinute" class="control secondary" type="button">＋ 1分</button>
-    </section>
-
-    <section class="time-panel card" aria-labelledby="time-title">
-      <h2 id="time-title" class="section-title">何分にしますか？</h2>
-      <div id="presets" class="presets" aria-label="よく使う時間"></div>
-      <div class="custom-row">
-        <div class="time-field">
-          <label for="minutes">分</label>
-          <div class="number-wrap"><button class="step" type="button" data-adjust="-60" aria-label="1分減らす">−</button><input id="minutes" class="time-input" type="number" inputmode="numeric" min="0" max="999" value="5"><button class="step" type="button" data-adjust="60" aria-label="1分増やす">＋</button></div>
-        </div>
-        <span class="colon" aria-hidden="true">:</span>
-        <div class="time-field">
-          <label for="seconds">秒</label>
-          <div class="number-wrap"><button class="step" type="button" data-adjust="-10" aria-label="10秒減らす">−</button><input id="seconds" class="time-input" type="number" inputmode="numeric" min="0" max="59" value="0"><button class="step" type="button" data-adjust="10" aria-label="10秒増やす">＋</button></div>
-        </div>
+    <div id="timePicker" class="time-picker" role="group" aria-label="設定時間">
+      <div class="wheel-labels"><span id="minuteLabel">分</span><span id="secondLabel">秒</span></div>
+      <div class="wheels">
+        <div class="wheel-frame"><div id="minutes" class="wheel" role="spinbutton" tabindex="0" aria-labelledby="minuteLabel" aria-valuemin="0" aria-valuemax="999" aria-valuenow="5" aria-valuetext="5分" aria-describedby="wheelHint"></div></div>
+        <div class="wheel-frame"><div id="seconds" class="wheel" role="spinbutton" tabindex="0" aria-labelledby="secondLabel" aria-valuemin="0" aria-valuemax="59" aria-valuenow="0" aria-valuetext="0秒" aria-describedby="wheelHint"></div></div>
       </div>
-      <div class="nudge-row" aria-label="時間を調整">
-        <button class="nudge" type="button" data-adjust="-300">−5分</button><button class="nudge" type="button" data-adjust="-60">−1分</button><button class="nudge" type="button" data-adjust="60">＋1分</button><button class="nudge" type="button" data-adjust="300">＋5分</button>
-      </div>
-      <p class="hint">時間は数字を直接入力することもできます</p>
-    </section>
+      <p id="wheelHint" class="hint">上下にスワイプして時間を調整</p>
+    </div>
 
-    <details class="card">
-      <summary>活動名・メッセージ・音の設定</summary>
-      <div class="settings-grid">
-        <div class="field"><label for="activityInput">活動名</label><input id="activityInput" value="話し合いタイム"></div>
-        <div class="field"><label for="soundMode">終了音</label><select id="soundMode"><option value="chime">チャイム</option><option value="beep">電子音</option><option value="none">鳴らさない</option></select></div>
-        <div class="field full"><label for="messageInput">画面に出すメッセージ</label><textarea id="messageInput">相手の方を見て、順番に意見を出しましょう。</textarea></div>
-        <button id="soundTest" class="icon-btn" type="button">♪ 音を試す</button>
-      </div>
-    </details>
+    <div id="runningAdjust" class="running-adjust" hidden><button id="addMinute" class="add" type="button">＋ 1分</button></div>
+
+    <div class="utilities">
+      <button id="soundTest" class="utility" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m11 4-6 5H2v6h3l6 5zM16 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>
+        音を確認
+      </button>
+      <button id="focus" class="utility" type="button" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg>
+        <span id="focusLabel">大きく表示</span>
+      </button>
+    </div>
+    <p id="soundNote" class="sound-note" role="status" hidden></p>
   </main>
 
   <script>
-    const presetMinutes=[1,3,5,10,15,20,45];
-    const $=id=>document.getElementById(id);
-    const timer=$('timer'),status=$('status'),bar=$('bar'),toast=$('toast');
-    let total=300,remaining=300,running=false,endAt=0,tickId=0,toastId=0,audioCtx=null,finished=false;
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const MAX = 59999;
+    let configured = 300, remainingMs = 300000, endAt = 0, running = false, finished = false;
+    let ticker = 0, audioCtx = null, alarmSource = null, alarmGain = null, alarmActive = false;
+    let testSource = null, wakeLock = null, wakeRequest = 0;
+    const wheels = [];
+    const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+    const fmt = n => String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    function clamp(n,min,max){return Math.min(max,Math.max(min,n))}
-    function fmt(seconds){seconds=Math.max(0,Math.round(seconds));return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0')}
-    function inputSeconds(){return clamp((parseInt($('minutes').value,10)||0)*60+(parseInt($('seconds').value,10)||0),1,59999)}
-    function writeInputs(seconds){seconds=clamp(Math.round(seconds),1,59999);$('minutes').value=Math.floor(seconds/60);$('seconds').value=seconds%60}
-    function save(){localStorage.setItem('schoolTimerV2',JSON.stringify({seconds:inputSeconds(),activity:$('activityInput').value,message:$('messageInput').value,sound:$('soundMode').value}))}
-    function render(){
-      timer.textContent=fmt(remaining);
-      timer.classList.toggle('urgent',!finished&&remaining>0&&remaining<=10);
-      timer.classList.toggle('done',finished);
-      $('activity').textContent=$('activityInput').value||'活動名';
-      $('message').textContent=$('messageInput').value||'';
-      bar.style.width=Math.min(100,Math.max(0,((total-remaining)/total)*100))+'%';
-      document.title=fmt(remaining)+'｜学校タイマー';
-      document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('selected',Number(b.dataset.minutes)*60===inputSeconds()));
-      save();
-    }
-    function show(text){clearTimeout(toastId);toast.textContent=text;toast.classList.add('show');toastId=setTimeout(()=>toast.classList.remove('show'),2200)}
-    function tone(test=false){
-      const mode=test&&$('soundMode').value==='none'?'chime':$('soundMode').value;if(mode==='none')return;
-      audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
-      const now=audioCtx.currentTime,notes=mode==='beep'?[880,880,880]:[659,784,988,1318];
-      notes.forEach((frequency,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=mode==='beep'?'square':'sine';o.frequency.value=frequency;g.gain.setValueAtTime(.0001,now+i*.18);g.gain.exponentialRampToValueAtTime(.25,now+i*.18+.03);g.gain.exponentialRampToValueAtTime(.0001,now+i*.18+.16);o.connect(g).connect(audioCtx.destination);o.start(now+i*.18);o.stop(now+i*.18+.18)});
-    }
-    function setTime(seconds,announce=''){
-      if(running)return;
-      finished=false;total=remaining=clamp(Math.round(seconds),1,59999);writeInputs(total);status.textContent='準備できました';render();if(announce)show(announce);
-    }
-    function startPause(){
-      if(running){pause();return}
-      if(finished||remaining<=0){remaining=total;finished=false}
-      running=true;endAt=Date.now()+remaining*1000;$('startPause').textContent='Ⅱ 一時停止';$('startPause').classList.add('running');status.textContent='計っています';tickId=setInterval(tick,200);tick();
-    }
-    function pause(){
-      if(!running)return;clearInterval(tickId);remaining=Math.max(0,Math.ceil((endAt-Date.now())/1000));running=false;$('startPause').textContent='▶ つづける';$('startPause').classList.remove('running');status.textContent='一時停止中';render();
-    }
-    function tick(){
-      remaining=Math.max(0,Math.ceil((endAt-Date.now())/1000));render();
-      if(remaining<=0){clearInterval(tickId);running=false;finished=true;$('startPause').textContent='▶ もう一度';$('startPause').classList.remove('running');status.textContent='時間です！';render();tone();show('時間です！')}
-    }
-    function reset(){clearInterval(tickId);running=false;finished=false;total=inputSeconds();remaining=total;$('startPause').textContent='▶ はじめる';$('startPause').classList.remove('running');status.textContent='時間を選んで、はじめるを押します';render()}
-    function adjust(seconds){
-      if(running){remaining=Math.max(1,remaining+seconds);total=Math.max(remaining,total+seconds);endAt+=seconds*1000;writeInputs(total);render();show((seconds>0?'+':'')+(seconds/60)+'分しました');return}
-      setTime(inputSeconds()+seconds);
+    function persist() {
+      try { localStorage.setItem('schoolTimerSimpleV1', String(configured)); } catch (_) {}
     }
 
-    presetMinutes.forEach(min=>{const b=document.createElement('button');b.type='button';b.className='preset';b.dataset.minutes=min;b.textContent=min+'分';b.onclick=()=>setTime(min*60,min+'分にしました');$('presets').appendChild(b)});
-    document.querySelectorAll('[data-adjust]').forEach(b=>b.addEventListener('click',()=>adjust(Number(b.dataset.adjust))));
-    ['minutes','seconds'].forEach(id=>$(id).addEventListener('change',()=>setTime(inputSeconds())));
-    ['activityInput','messageInput','soundMode'].forEach(id=>$(id).addEventListener('input',render));
-    $('startPause').onclick=startPause;$('reset').onclick=reset;$('addMinute').onclick=()=>adjust(60);$('soundTest').onclick=()=>tone(true);
-    $('focus').onclick=()=>{document.body.classList.toggle('focus');const on=document.body.classList.contains('focus');$('focus').textContent=on?'× 大画面終了':'⛶ 大画面';$('focus').setAttribute('aria-pressed',on)};
-    document.addEventListener('keydown',e=>{if(e.target.matches('input,textarea,select'))return;if(e.code==='Space'){e.preventDefault();startPause()}if(e.key.toLowerCase()==='r')reset();if(e.key==='Escape'&&document.body.classList.contains('focus'))$('focus').click()});
-    try{const s=JSON.parse(localStorage.getItem('schoolTimerV2')||'{}');if(s.seconds)writeInputs(s.seconds);if(s.activity)$('activityInput').value=s.activity;if(s.message!==undefined)$('messageInput').value=s.message;if(s.sound)$('soundMode').value=s.sound}catch(e){}
-    total=remaining=inputSeconds();render();
+    function render() {
+      const seconds = Math.ceil(remainingMs / 1000);
+      $('timer').textContent = fmt(seconds);
+      $('timer').setAttribute('aria-label', `残り${Math.floor(seconds / 60)}分${seconds % 60}秒`);
+      $('timer').classList.toggle('urgent', !finished && seconds > 0 && seconds <= 10);
+      $('timer').classList.toggle('done', finished);
+      $('progress').style.width = (configured ? clamp(remainingMs / (configured * 1000) * 100, 0, 100) : 0) + '%';
+      $('startLabel').textContent = alarmActive ? '音を止める' : running ? '一時停止' : finished ? 'もう一度' : remainingMs < configured * 1000 ? 'つづける' : 'スタート';
+      $('startIcon').innerHTML = alarmActive ? '<rect x="6" y="6" width="12" height="12" rx="1"/>' : running ? '<path d="M8 5v14M16 5v14"/>' : '<path d="m9 5 11 7-11 7z"/>';
+      $('startPause').classList.toggle('alarm', alarmActive);
+      $('startPause').disabled = configured === 0;
+      const statusText = finished ? '時間です' : running ? '計測中' : remainingMs < configured * 1000 ? '一時停止中' : '\u00a0';
+      if ($('status').textContent !== statusText) $('status').textContent = statusText;
+      $('timePicker').hidden = running || finished;
+      $('runningAdjust').hidden = !running;
+      $('addMinute').disabled = configured >= MAX;
+      $('soundTest').disabled = alarmActive;
+      document.title = fmt(seconds) + '｜学校タイマー';
+    }
+
+    function createWheel(id, count, unit) {
+      const el = $(id);
+      const fragment = document.createDocumentFragment();
+      for (let i = 0; i < count * 3; i++) {
+        const row = document.createElement('div');
+        row.className = 'wheel-value';
+        row.textContent = String(i % count).padStart(2, '0');
+        row.setAttribute('aria-hidden', 'true');
+        fragment.appendChild(row);
+      }
+      el.appendChild(fragment);
+      let settleId = 0, selected = null, frameId = 0, drag = null, dragged = false;
+      const wheel = { el, count, value:0, set };
+      function rowHeight() { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--row')); }
+      function select(index) {
+        index = clamp(index, 0, count * 3 - 1);
+        if (selected !== el.children[index]) {
+          selected?.classList.remove('selected');
+          selected = el.children[index];
+          selected.classList.add('selected');
+        }
+        wheel.value = index % count;
+        el.setAttribute('aria-valuenow', wheel.value);
+        el.setAttribute('aria-valuetext', wheel.value + unit);
+      }
+      function set(value) {
+        clearTimeout(settleId);
+        select(count + value);
+        el.scrollTop = (count + value) * rowHeight();
+      }
+      function read() {
+        if (running || finished || !el.getClientRects().length) return;
+        select(Math.round(el.scrollTop / rowHeight()));
+        const next = wheels[0].value * 60 + wheels[1].value;
+        if (next !== configured) setTime(next, false);
+      }
+      function settle() {
+        if (drag || running || finished || !el.getClientRects().length) return;
+        read();
+        const index = Math.round(el.scrollTop / rowHeight());
+        if (index < count || index >= count * 2) set(wheel.value);
+      }
+      el.addEventListener('scroll', () => {
+        cancelAnimationFrame(frameId);
+        frameId = requestAnimationFrame(read);
+        clearTimeout(settleId);
+        settleId = setTimeout(settle, 180);
+      }, { passive:true });
+      el.addEventListener('scrollend', settle);
+      el.addEventListener('pointerdown', event => {
+        if (event.pointerType !== 'mouse' || event.button !== 0) return;
+        drag = { y:event.clientY, top:el.scrollTop, id:event.pointerId };
+        dragged = false;
+      });
+      el.addEventListener('pointermove', event => {
+        if (!drag) return;
+        const distance = drag.y - event.clientY;
+        if (!dragged && Math.abs(distance) < 5) return;
+        dragged = true;
+        el.setPointerCapture(drag.id);
+        el.style.scrollSnapType = 'none';
+        el.scrollTop = drag.top + distance;
+      });
+      function endDrag() {
+        if (!drag) return;
+        const top = Math.round(el.scrollTop / rowHeight()) * rowHeight();
+        drag = null;
+        el.style.scrollSnapType = '';
+        if (dragged) el.scrollTo({ top, behavior:reduceMotion ? 'instant' : 'smooth' });
+      }
+      el.addEventListener('pointerup', endDrag);
+      el.addEventListener('pointercancel', endDrag);
+      el.addEventListener('lostpointercapture', endDrag);
+      el.addEventListener('pointerleave', () => { if (!dragged) drag = null; });
+      el.addEventListener('click', event => {
+        if (dragged) { dragged = false; return; }
+        if (!event.target.classList.contains('wheel-value')) return;
+        const index = Array.prototype.indexOf.call(el.children, event.target);
+        el.scrollTo({ top:index * rowHeight(), behavior:reduceMotion ? 'instant' : 'smooth' });
+      });
+      el.addEventListener('keydown', event => {
+        const increments = { ArrowUp:1, ArrowDown:-1, PageUp:10, PageDown:-10 };
+        if (!(event.key in increments) && event.key !== 'Home' && event.key !== 'End') return;
+        event.preventDefault();
+        const value = event.key === 'Home' ? 0 : event.key === 'End' ? count - 1 : (wheel.value + increments[event.key] + count) % count;
+        set(value);
+        setTime(wheels[0].value * 60 + wheels[1].value, false);
+      });
+      wheels.push(wheel);
+    }
+
+    function syncWheels() {
+      wheels[0].set(Math.floor(configured / 60));
+      wheels[1].set(configured % 60);
+    }
+
+    function setTime(seconds, sync = true) {
+      configured = clamp(Math.round(seconds), 0, MAX);
+      remainingMs = configured * 1000;
+      finished = false;
+      render();
+      if (sync) syncWheels();
+      persist();
+    }
+
+    async function prepareAudio() {
+      try {
+        if (!audioCtx || audioCtx.state === 'closed') audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        await audioCtx.resume();
+        if (audioCtx.state !== 'running') throw new Error('Audio unavailable');
+        $('soundNote').hidden = true;
+        return true;
+      } catch (_) {
+        $('soundNote').textContent = '音を再生できません。「音を確認」を押してください。';
+        $('soundNote').hidden = false;
+        return false;
+      }
+    }
+
+    function makeAlarmSource(loop) {
+      const duration = 1.8, rate = audioCtx.sampleRate;
+      const buffer = audioCtx.createBuffer(1, Math.ceil(rate * duration), rate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        const t = i / rate, beat = Math.floor(t / .3), phase = t - beat * .3;
+        if (beat >= 4 || phase >= .19) continue;
+        const frequency = beat % 2 === 0 ? 880 : 1174;
+        const envelope = Math.min(1, phase / .008, (.19 - phase) / .012);
+        data[i] = .7 * envelope * (Math.sin(2 * Math.PI * frequency * phase) + .2 * Math.sin(4 * Math.PI * frequency * phase)) / 1.2;
+      }
+      const source = audioCtx.createBufferSource();
+      const gain = audioCtx.createGain();
+      gain.gain.value = .85;
+      source.buffer = buffer;
+      source.loop = loop;
+      source.connect(gain).connect(audioCtx.destination);
+      source.onended = () => { source.disconnect(); gain.disconnect(); };
+      source.start();
+      return { source, gain };
+    }
+
+    function stopSource(source) {
+      if (!source) return;
+      try { source.stop(); } catch (_) {}
+    }
+
+    function stopAlarm() {
+      alarmActive = false;
+      if (alarmGain && audioCtx) alarmGain.gain.setTargetAtTime(0, audioCtx.currentTime, .008);
+      stopSource(alarmSource);
+      alarmSource = alarmGain = null;
+    }
+
+    async function soundAlarm() {
+      alarmActive = true;
+      render();
+      const ready = await prepareAudio();
+      if (!ready || !alarmActive) return;
+      stopSource(testSource);
+      const sound = makeAlarmSource(true);
+      alarmSource = sound.source;
+      alarmGain = sound.gain;
+    }
+
+    async function holdScreen() {
+      const request = ++wakeRequest;
+      try {
+        if (!navigator.wakeLock || document.visibilityState !== 'visible') return;
+        const lock = await navigator.wakeLock.request('screen');
+        if (!running || request !== wakeRequest) { await lock.release(); return; }
+        wakeLock = lock;
+      } catch (_) {}
+    }
+
+    function releaseScreen() {
+      wakeRequest++;
+      wakeLock?.release().catch(() => {});
+      wakeLock = null;
+    }
+
+    function tick() {
+      if (!running) return;
+      remainingMs = Math.max(0, endAt - Date.now());
+      if (remainingMs === 0) {
+        clearInterval(ticker);
+        running = false;
+        finished = true;
+        releaseScreen();
+        void soundAlarm();
+      }
+      render();
+    }
+
+    function toggleTimer() {
+      if (alarmActive) { stopAlarm(); render(); return; }
+      if (running) {
+        tick();
+        if (!running) return;
+        clearInterval(ticker);
+        running = false;
+        releaseScreen();
+        render();
+        requestAnimationFrame(syncWheels);
+        return;
+      }
+      // Flush any unfinished wheel gesture before starting.
+      if (!finished) {
+        for (const wheel of wheels) {
+          const row = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--row'));
+          if (wheel.el.getClientRects().length) wheel.value = Math.round(wheel.el.scrollTop / row) % wheel.count;
+        }
+        const next = wheels[0].value * 60 + wheels[1].value;
+        if (next !== configured) setTime(next);
+      }
+      if (!configured) return;
+      void prepareAudio();
+      stopSource(testSource);
+      if (finished || remainingMs <= 0) remainingMs = configured * 1000;
+      finished = false;
+      endAt = Date.now() + remainingMs;
+      running = true;
+      ticker = setInterval(tick, 100);
+      void holdScreen();
+      tick();
+    }
+
+    function reset() {
+      clearInterval(ticker);
+      running = false;
+      finished = false;
+      stopAlarm();
+      stopSource(testSource);
+      releaseScreen();
+      setTime(configured);
+    }
+
+    $('startPause').addEventListener('click', toggleTimer);
+    $('reset').addEventListener('click', reset);
+    $('addMinute').addEventListener('click', () => {
+      if (!running) return;
+      tick();
+      if (!running) return;
+      const extra = Math.min(60, MAX - configured);
+      configured += extra;
+      endAt += extra * 1000;
+      persist();
+      tick();
+    });
+    $('soundTest').addEventListener('click', async () => {
+      if (alarmActive || !(await prepareAudio())) return;
+      // The timer may finish while the audio context is resuming.
+      if (alarmActive) return;
+      stopSource(testSource);
+      testSource = makeAlarmSource(false).source;
+    });
+    $('focus').addEventListener('click', () => {
+      const expanded = document.body.classList.toggle('expanded');
+      $('focus').setAttribute('aria-pressed', String(expanded));
+      $('focusLabel').textContent = expanded ? '元の表示' : '大きく表示';
+      if (!expanded && !running && !finished) requestAnimationFrame(syncWheels);
+    });
+    document.addEventListener('keydown', event => {
+      if (event.repeat || event.ctrlKey || event.altKey || event.metaKey || event.target.closest('button,[role="spinbutton"]')) return;
+      if (event.code === 'Space') { event.preventDefault(); toggleTimer(); }
+      if (event.key.toLowerCase() === 'r') reset();
+      if (event.key === 'Escape' && document.body.classList.contains('expanded')) $('focus').click();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (running) tick();
+      if (running && document.visibilityState === 'visible') void holdScreen();
+    });
+    window.addEventListener('resize', () => {
+      if (!running && !finished) requestAnimationFrame(syncWheels);
+    });
+
+    try {
+      const saved = localStorage.getItem('schoolTimerSimpleV1');
+      const legacy = JSON.parse(localStorage.getItem('schoolTimerV2') || '{}');
+      const seconds = saved !== null ? Number(saved) : Number(legacy.seconds);
+      if (Number.isFinite(seconds)) configured = clamp(Math.round(seconds), 0, MAX);
+    } catch (_) {}
+    createWheel('minutes', 1000, '分');
+    createWheel('seconds', 60, '秒');
+    setTime(configured);
   </script>
 </body>
 </html>
-
