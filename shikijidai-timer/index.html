@@ -4,12 +4,12 @@
 </head><body data-tool="ceremony"><button id="newBtn" class="btn light new">新規作成</button><main class="app"><header class="top"><div><h1>式次第タイマー</h1><p class="note">タイトルと項目数を決め、項目名を入力して、各項目の開始・停止を記録します。</p></div><label class="toggle">秒表示<input id="sec1" type="checkbox"></label></header>
 <section id="setup" class="screen on panel"><div class="hd"><h2>最初の設定</h2></div><div class="bd"><div class="grid"><div><label for="title">タイトル</label><input id="title" type="text" value="式次第" placeholder="例：卒業証書授与式"></div><div><label for="count">項目数</label><input id="count" type="number" min="1" max="80" value="10"></div><label class="toggle">秒表示<input id="sec2" type="checkbox"></label></div><p class="help">秒表示はあとからでも切り替えできます。内部では常に秒まで記録します。</p><p><button id="makeBtn" class="btn blue full">項目名を入力する</button></p><div id="msg" class="msg"></div></div></section>
 <section id="names" class="screen panel"><div class="hd"><h2>項目名の入力</h2><button id="backSetup" class="btn light">設定に戻る</button></div><div class="bd"><div id="namesArea" class="names"></div><div class="foot"><button id="startBtn" class="btn blue">計測画面へ</button></div></div></section>
-<section id="timer" class="screen"><div class="timerTop"><section class="now"><div class="badge"><span id="dot" class="dot"></span><span id="status">待機中</span></div><div id="viewTitle" class="event">式次第</div><div id="curName" class="cur">項目を開始してください</div><div id="curElapsed" class="elapsed">0分</div></section><aside class="side"><label class="toggle">秒表示<input id="sec3" type="checkbox"></label><div class="sideBtns"><button id="nextBtn" class="btn orange">停止して次へ</button><button id="printBtn" class="btn green">印刷ページを開く</button><button id="editBtn" class="btn light">項目名を編集</button></div><p class="small">リセットは項目ごとです。すべて消して最初から作る場合は、上の「新規作成」を使います。</p></aside></div><section class="panel"><div class="hd"><h2 id="tableTitle">式次記録</h2><span class="small" id="saveLabel">自動保存</span></div><div class="bd"><div class="tableWrap"><table><thead><tr><th class="num">No</th><th>項目名</th><th>開始</th><th>終了</th><th>所要時間</th><th class="act">操作</th></tr></thead><tbody id="rows"></tbody></table></div><div id="cards" class="cards"></div><div class="foot"><button id="printBtn2" class="btn green">印刷ページを開く</button></div></div></section></section></main>
+<section id="timer" class="screen"><div class="timerTop"><section class="now"><div class="badge"><span id="dot" class="dot"></span><span id="status">待機中</span></div><div id="viewTitle" class="event">式次第</div><div id="curName" class="cur">項目を開始してください</div><div id="curElapsed" class="elapsed">0分</div></section><aside class="side"><label class="toggle">秒表示<input id="sec3" type="checkbox"></label><div class="sideBtns"><button id="nextBtn" class="btn green">スタート</button><button id="resetAllBtn" class="btn light">時間を一括リセット</button><button id="printBtn" class="btn green">印刷ページを開く</button><button id="editBtn" class="btn light">項目名を編集</button></div><p class="small">「スタート」で最初の項目を開始し、「停止して次へ」で順に進めます。「時間を一括リセット」はタイトル・項目名を残して、すべての計測記録を消します。</p></aside></div><section class="panel"><div class="hd"><h2 id="tableTitle">式次記録</h2><span class="small" id="saveLabel">自動保存</span></div><div class="bd"><div class="tableWrap"><table><thead><tr><th class="num">No</th><th>項目名</th><th>開始</th><th>終了</th><th>所要時間</th><th class="act">操作</th></tr></thead><tbody id="rows"></tbody></table></div><div id="cards" class="cards"></div><div class="foot"><button id="printBtn2" class="btn green">印刷ページを開く</button></div></div></section></section></main>
 <div id="modal" class="modal" aria-hidden="true"><div class="modalCard"><h2 id="mTitle">確認</h2><p id="mText">実行しますか？</p><div class="modalBtns"><button id="mNo" class="btn light">いいえ</button><button id="mOk" class="btn red">OK</button></div></div></div>
 <script>
 const KEY='shikijidai_timer_final_v2';
 const $=id=>document.getElementById(id);let pending=null;
-const els={newBtn:$('newBtn'),setup:$('setup'),names:$('names'),timer:$('timer'),title:$('title'),count:$('count'),sec1:$('sec1'),sec2:$('sec2'),sec3:$('sec3'),makeBtn:$('makeBtn'),msg:$('msg'),namesArea:$('namesArea'),backSetup:$('backSetup'),startBtn:$('startBtn'),viewTitle:$('viewTitle'),curName:$('curName'),curElapsed:$('curElapsed'),dot:$('dot'),status:$('status'),nextBtn:$('nextBtn'),printBtn:$('printBtn'),printBtn2:$('printBtn2'),editBtn:$('editBtn'),tableTitle:$('tableTitle'),rows:$('rows'),cards:$('cards'),saveLabel:$('saveLabel'),modal:$('modal'),mTitle:$('mTitle'),mText:$('mText'),mNo:$('mNo'),mOk:$('mOk')};
+const els={newBtn:$('newBtn'),setup:$('setup'),names:$('names'),timer:$('timer'),title:$('title'),count:$('count'),sec1:$('sec1'),sec2:$('sec2'),sec3:$('sec3'),makeBtn:$('makeBtn'),msg:$('msg'),namesArea:$('namesArea'),backSetup:$('backSetup'),startBtn:$('startBtn'),viewTitle:$('viewTitle'),curName:$('curName'),curElapsed:$('curElapsed'),dot:$('dot'),status:$('status'),nextBtn:$('nextBtn'),resetAllBtn:$('resetAllBtn'),printBtn:$('printBtn'),printBtn2:$('printBtn2'),editBtn:$('editBtn'),tableTitle:$('tableTitle'),rows:$('rows'),cards:$('cards'),saveLabel:$('saveLabel'),modal:$('modal'),mTitle:$('mTitle'),mText:$('mText'),mNo:$('mNo'),mOk:$('mOk')};
 let state={title:'式次第',showSec:false,items:[]};
 const now=()=>Date.now(),pad=n=>String(n).padStart(2,'0'),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function show(id){['setup','names','timer'].forEach(x=>els[x].classList.toggle('on',x===id));}
@@ -26,11 +26,45 @@ function cls(it){return it.running?'run':(it.stop?'done':'')}
 function rowHtml(it){return `<tr id="r${it.id}" class="${cls(it)}"><td class="num">${it.id}</td><td class="nm">${esc(it.name)}</td><td class="tm" data-start="${it.id}">${fmtTime(it.first)}</td><td class="tm" data-stop="${it.id}">${it.running?'計測中':fmtTime(it.stop)}</td><td class="dur" data-dur="${it.id}">${fmtDur(elapsed(it))}</td><td class="act"><button class="btn green rowbtn" data-a="start" data-id="${it.id}">開始／再開</button><button class="btn red rowbtn" data-a="stop" data-id="${it.id}">停止</button><button class="btn light rowbtn" data-a="reset" data-id="${it.id}">リセット</button></td></tr>`}
 function cardHtml(it){return `<div id="c${it.id}" class="itemCard ${cls(it)}"><div class="itemHead"><span>${it.id}. ${esc(it.name)}</span><span>${it.running?'計測中':it.stop?'完了':'待機'}</span></div><div class="kv"><div><span>開始</span><b data-cstart="${it.id}">${fmtTime(it.first)}</b></div><div><span>終了</span><b data-cstop="${it.id}">${it.running?'計測中':fmtTime(it.stop)}</b></div><div><span>所要</span><b data-cdur="${it.id}">${fmtDur(elapsed(it))}</b></div></div><div class="cardBtns"><button class="btn green rowbtn" data-a="start" data-id="${it.id}">開始／再開</button><button class="btn red rowbtn" data-a="stop" data-id="${it.id}">停止</button><button class="btn light rowbtn" data-a="reset" data-id="${it.id}">リセット</button></div></div>`}
 function updateItem(it){['start','stop','dur'].forEach(k=>{document.querySelectorAll(`[data-${k}="${it.id}"], [data-c${k}="${it.id}"]`).forEach(e=>{e.textContent=k==='start'?fmtTime(it.first):k==='stop'?(it.running?'計測中':fmtTime(it.stop)):fmtDur(elapsed(it))})});const r=$('r'+it.id),c=$('c'+it.id);if(r)r.className=cls(it);if(c)c.className='itemCard '+cls(it)}
-function tick(){const run=state.items.find(i=>i.running);if(run)updateItem(run);if(run){els.dot.classList.add('run');els.status.textContent='計測中';els.curName.textContent=run.name;els.curElapsed.textContent=fmtDur(elapsed(run));let idx=state.items.findIndex(i=>i.id===run.id);els.nextBtn.disabled=idx<0||idx>=state.items.length-1}else{els.dot.classList.remove('run');els.status.textContent='待機中';let last=[...state.items].reverse().find(i=>i.stop);els.curName.textContent=last?'直前：'+last.name:'項目を開始してください';els.curElapsed.textContent=last?fmtDur(elapsed(last)):fmtDur(0);els.nextBtn.disabled=true}}
+function tick(){
+  const run=state.items.find(i=>i.running);
+  els.resetAllBtn.disabled=!state.items.length;
+  els.nextBtn.classList.toggle('green',!run);
+  els.nextBtn.classList.toggle('orange',!!run);
+  if(run){
+    updateItem(run);
+    els.dot.classList.add('run');
+    els.status.textContent='計測中';
+    els.curName.textContent=run.name;
+    els.curElapsed.textContent=fmtDur(elapsed(run));
+    const idx=state.items.findIndex(i=>i.id===run.id);
+    els.nextBtn.textContent=idx===state.items.length-1?'停止して終了':'停止して次へ';
+    els.nextBtn.disabled=false;
+  }else{
+    els.dot.classList.remove('run');
+    const next=state.items.find(i=>!i.first);
+    const complete=state.items.length>0&&!next;
+    els.status.textContent=complete?'計測完了':'待機中';
+    const last=[...state.items].reverse().find(i=>i.stop);
+    els.curName.textContent=last?'直前：'+last.name:'項目を開始してください';
+    els.curElapsed.textContent=last?fmtDur(elapsed(last)):fmtDur(0);
+    els.nextBtn.textContent=complete?'計測完了':'スタート';
+    els.nextBtn.disabled=!next;
+  }
+}
 function startItem(id){const it=state.items.find(i=>i.id===id),run=state.items.find(i=>i.running);if(!it)return;if(run&&run.id!==id){alert(`${run.id}番「${run.name}」が計測中です。先に停止してください。`);return}if(it.running)return;const t=now();if(!it.first)it.first=t;it.started=t;it.running=true;it.stop=null;updateItem(it);tick();save();}
 function stopItem(id){const it=state.items.find(i=>i.id===id);if(!it)return;if(!it.running){alert('先に開始してください。');return}it.elapsed=elapsed(it);it.running=false;it.started=null;it.stop=now();updateItem(it);tick();save();}
 function askReset(id){const it=state.items.find(i=>i.id===id);if(!it)return;confirmBox(`本当にリセットしますか？\n\n${it.id}番「${it.name}」の開始・終了・所要時間を削除します。`,()=>{Object.assign(it,{first:null,stop:null,started:null,elapsed:0,running:false});updateItem(it);tick();save()},'本当にリセットしますか？','OK','いいえ')}
-function stopNext(){const run=state.items.find(i=>i.running);if(!run)return;const idx=state.items.findIndex(i=>i.id===run.id);stopItem(run.id);if(idx>=0&&idx<state.items.length-1)startItem(state.items[idx+1].id)}
+function askResetAll(){
+  if(!state.items.length)return;
+  confirmBox('すべての項目の開始・終了・所要時間をリセットします。\n\nタイトル・項目名・秒表示の設定はそのまま残ります。\n計測中の項目も停止し、最初から計測できる状態に戻ります。',()=>{
+    state.items.forEach(it=>Object.assign(it,{first:null,stop:null,started:null,elapsed:0,running:false}));
+    renderTimer();
+    save();
+    els.nextBtn.focus();
+  },'時間を一括リセットしますか？','リセットする','キャンセル');
+}
+function stopNext(){const run=state.items.find(i=>i.running);if(!run){const next=state.items.find(i=>!i.first);if(next)startItem(next.id);return}const idx=state.items.findIndex(i=>i.id===run.id);stopItem(run.id);if(idx>=0&&idx<state.items.length-1)startItem(state.items[idx+1].id)}
 function printPage(){
   tick();
   let total=state.items.reduce((s,i)=>s+elapsed(i),0);
@@ -47,5 +81,5 @@ function confirmBox(text,ok,title='確認',okText='OK',noText='いいえ'){pendi
 function closeModal(){pending=null;els.modal.classList.remove('on');els.modal.setAttribute('aria-hidden','true')}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));els.saveLabel.textContent='自動保存済み'}catch(e){els.saveLabel.textContent='自動保存できませんでした'}}
 function load(){try{let raw=localStorage.getItem(KEY);if(!raw)return false;let s=JSON.parse(raw);if(!s||!Array.isArray(s.items)||!s.items.length)return false;state=s;state.items=state.items.map((i,idx)=>({...i,id:idx+1,running:i.running,started:i.running?now():i.started||null}));els.title.value=state.title||'式次第';els.count.value=state.items.length;renderTimer();show('timer');return true}catch(e){return false}}
-els.makeBtn.onclick=makeInputs;els.backSetup.onclick=()=>show('setup');els.startBtn.onclick=applyNames;els.sec1.onchange=e=>syncSec(e.target.checked);els.sec2.onchange=e=>syncSec(e.target.checked);els.sec3.onchange=e=>syncSec(e.target.checked);els.nextBtn.onclick=stopNext;els.printBtn.onclick=printPage;els.printBtn2.onclick=printPage;els.editBtn.onclick=()=>{renderNames();show('names')};els.newBtn.onclick=newCreate;els.rows.onclick=els.cards.onclick=e=>{let b=e.target.closest('button[data-a]');if(!b)return;let id=Number(b.dataset.id);if(b.dataset.a==='start')startItem(id);if(b.dataset.a==='stop')stopItem(id);if(b.dataset.a==='reset')askReset(id)};els.mNo.onclick=closeModal;els.mOk.onclick=()=>{let f=pending;closeModal();if(f)f()};els.modal.onclick=e=>{if(e.target===els.modal)closeModal()};document.addEventListener('keydown',e=>{if(e.key==='Escape'&&els.modal.classList.contains('on'))closeModal();if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();printPage()}});setInterval(tick,500);window.addEventListener('beforeunload',save);if(!load()){show('setup')}
+els.makeBtn.onclick=makeInputs;els.backSetup.onclick=()=>show('setup');els.startBtn.onclick=applyNames;els.sec1.onchange=e=>syncSec(e.target.checked);els.sec2.onchange=e=>syncSec(e.target.checked);els.sec3.onchange=e=>syncSec(e.target.checked);els.nextBtn.onclick=stopNext;els.resetAllBtn.onclick=askResetAll;els.printBtn.onclick=printPage;els.printBtn2.onclick=printPage;els.editBtn.onclick=()=>{renderNames();show('names')};els.newBtn.onclick=newCreate;els.rows.onclick=els.cards.onclick=e=>{let b=e.target.closest('button[data-a]');if(!b)return;let id=Number(b.dataset.id);if(b.dataset.a==='start')startItem(id);if(b.dataset.a==='stop')stopItem(id);if(b.dataset.a==='reset')askReset(id)};els.mNo.onclick=closeModal;els.mOk.onclick=()=>{let f=pending;closeModal();if(f)f()};els.modal.onclick=e=>{if(e.target===els.modal)closeModal()};document.addEventListener('keydown',e=>{if(e.key==='Escape'&&els.modal.classList.contains('on'))closeModal();if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();printPage()}});setInterval(tick,500);window.addEventListener('beforeunload',save);if(!load()){show('setup')}
 </script></body></html>
